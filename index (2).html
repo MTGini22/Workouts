@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Workout Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f2;color:#1a1a1a;font-size:14px}
+.app{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+h1{font-size:19px;font-weight:600;margin-bottom:2px}
+.sub{font-size:11px;color:#999;margin-bottom:14px}
+.tnav{display:flex;gap:2px;background:#e3e3e1;border-radius:10px;padding:3px;margin-bottom:14px;position:sticky;top:8px;z-index:100}
+.tbtn{flex:1;padding:7px 4px;border:none;background:transparent;border-radius:7px;font-size:12px;font-weight:500;color:#666;cursor:pointer}
+.tbtn.on{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tc{display:none}.tc.on{display:block}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.mc{background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #e8e8e6}
+.ml{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.mv{font-size:20px;font-weight:600}
+.ms{font-size:10px;color:#bbb;margin-top:2px}
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.pill{padding:5px 13px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:#555}
+.pill.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.exlist{background:#fff;border-radius:12px;border:1px solid #e8e8e6;overflow:hidden;margin-bottom:12px}
+.exrow{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 13px;border-bottom:1px solid #f2f2f0;gap:8px}
+.exrow:last-child{border-bottom:none}
+.exn{font-weight:500;font-size:13px}
+.exm{font-size:11px;color:#999;margin-top:2px;line-height:1.45}
+.ext{font-size:12px;font-weight:600;text-align:right;flex-shrink:0}
+.up{color:#16a34a}.fl{color:#bbb}.dn{color:#dc2626}
+.cwrap{background:#fff;border-radius:12px;border:1px solid #e8e8e6;padding:12px;margin-bottom:12px}
+.cleg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.cli{display:flex;align-items:center;gap:4px;font-size:11px;color:#666}
+.csw{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.workout-btn{display:block;width:100%;padding:13px;background:#fff;border:1px solid #e8e8e6;border-radius:12px;margin-bottom:9px;text-align:left;cursor:pointer}
+.workout-btn:hover{border-color:#bbb}
+.wb-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.wb-meta{font-size:11px;color:#999}
+.logform{display:none}.logform.show{display:block}
+.ex-block{background:#fff;border:1px solid #e8e8e6;border-radius:12px;margin-bottom:9px;overflow:hidden}
+.ex-head{padding:9px 13px;background:#fafaf8;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ex-prev{font-size:11px;color:#999;font-weight:400;text-align:right;max-width:55%;line-height:1.35}
+.setrows{padding:8px 13px 10px}
+.setrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.slbl{font-size:11px;color:#999;width:34px;flex-shrink:0}
+.gtag{font-size:10px;color:#777;background:#f0f0ee;border-radius:4px;padding:2px 5px;flex-shrink:0}
+.sin{flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:16px;font-family:inherit;outline:none;min-width:0}
+.sin:focus{border-color:#888}
+.datein{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:9px;font-size:14px;font-family:inherit;outline:none;margin-bottom:11px}
+.savebtn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
+.backbtn{background:none;border:none;color:#666;font-size:13px;cursor:pointer;padding:0;margin-bottom:13px;display:block}
+.okmsg{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 13px;color:#166534;font-size:12px;margin-bottom:11px;display:none}
+.clbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:8px}
+.reccard{background:#fff;border:1px solid #e8e8e6;border-radius:11px;overflow:hidden;margin-bottom:7px}
+.rechead{padding:9px 13px;border-bottom:1px solid #f0f0ee;display:flex;align-items:center;justify-content:space-between}
+.recname{font-weight:600;font-size:13px}
+.recbadge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.bup{background:#f0fdf4;color:#166534}.bhold{background:#fefce8;color:#854d0e}.btech{background:#eff6ff;color:#1d4ed8}.bnew{background:#fdf4ff;color:#7e22ce}.bswap{background:#fff7ed;color:#c2410c}
+.mode-bar{display:flex;gap:6px;margin-bottom:12px}
+.mode-btn{flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:12px;font-weight:500;color:#666;cursor:pointer}
+.mode-btn.mode-on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.looks-good-btn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:12px;font-family:inherit}
+.looks-good-btn:hover{background:#15803d}
+.rec-actions{display:flex;gap:8px;margin-top:10px}
+.rec-act-btn{flex:1;padding:6px;border:1px solid #e8e8e6;border-radius:7px;background:#f4f4f2;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
+.rec-act-btn:hover{background:#ebebea;color:#1a1a1a}
+.tut-area{font-size:12px;color:#555;line-height:1.55;margin-top:8px;padding:8px 10px;background:#f9f9f7;border-radius:7px;border-left:3px solid #2563eb}
+.recbody{padding:9px 13px}
+.rectgt{font-size:13px;font-weight:500;margin-bottom:3px}
+.recreason{font-size:11px;color:#888;line-height:1.45}
+.chatwrap{background:#fff;border-radius:12px;border:1px solid #e8e8e6;overflow:hidden;margin-top:4px}
+.qrow{display:flex;gap:5px;padding:9px 9px 0;flex-wrap:wrap}
+.qbtn{background:#f4f4f2;border:1px solid #e8e8e6;border-radius:7px;padding:4px 8px;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
+.msgs{min-height:150px;max-height:340px;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:8px}
+.msg{display:flex;gap:6px}.msg.u{flex-direction:row-reverse}
+.bbl{max-width:84%;padding:8px 11px;border-radius:11px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.msg.a .bbl{background:#f4f4f2;border-radius:4px 11px 11px 11px}
+.msg.u .bbl{background:#1a1a1a;color:#fff;border-radius:11px 4px 11px 11px}
+.av{width:22px;height:22px;border-radius:50%;background:#e5e5e3;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#666;flex-shrink:0;margin-top:2px}
+.irow{display:flex;gap:6px;padding:8px 9px;border-top:1px solid #e8e8e6}
+.cin{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;outline:none;resize:none;background:#fafaf8}
+.sbtn{background:#1a1a1a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.sbtn:disabled{opacity:.4}
+.sp{display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emp{text-align:center;padding:24px;color:#ccc;font-size:13px}
+.ldrec{padding:18px;color:#999;font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div id="key-banner" style="background:#fff3cd;border-bottom:1px solid #ffc107;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <span style="color:#856404">Enter your Anthropic API key to enable the AI coach:</span>
+  <input id="key-input" type="password" placeholder="sk-ant-..." style="flex:1;min-width:200px;padding:5px 9px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:inherit">
+  <button onclick="var k=document.getElementById('key-input').value.trim();if(k){saveApiKey(k);document.getElementById('key-banner').style.display='none';}" style="padding:5px 14px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">Save</button>
+</div>
+<div class="app">
+  <h1>Workout tracker</h1>
+  <p class="sub">Aug 2025 &ndash; present &nbsp;&middot;&nbsp; Push / Legs / Back</p>
+  <div class="tnav">
+    <button class="tbtn on" id="btn-ov" onclick="tab('ov')">Overview</button>
+    <button class="tbtn" id="btn-pr" onclick="tab('pr')">Progress</button>
+    <button class="tbtn" id="btn-log" onclick="tab('log')">Log</button>
+    <button class="tbtn" id="btn-co" onclick="tab('co')">Coach</button>
+  </div>
+  <div id="tc-ov" class="tc on">
+    <div class="mgrid" id="ov-metrics"></div>
+    <div class="pills" id="ov-pills"></div>
+    <div id="ov-exlist"></div>
+  </div>
+  <div id="tc-pr" class="tc">
+    <div class="pills" id="pr-pills"></div>
+    <div class="cwrap">
+      <div class="cleg" id="pr-leg"></div>
+      <div style="position:relative;height:250px"><canvas id="pr-chart"></canvas></div>
+    </div>
+  </div>
+  <div id="tc-log" class="tc">
+    <div id="log-home">
+      <p style="font-size:12px;color:#999;margin-bottom:11px">Which workout are you logging?</p>
+      <button class="workout-btn" onclick="startLog('Push')"><div class="wb-name">Push</div><div class="wb-meta" id="lm-Push">Chest &middot; Shoulders &middot; Triceps</div></button>
+      <button class="workout-btn" onclick="startLog('Legs')"><div class="wb-name">Legs</div><div class="wb-meta" id="lm-Legs">Quads &middot; Hamstrings &middot; Glutes &middot; Calves</div></button>
+      <button class="workout-btn" onclick="startLog('Back')"><div class="wb-name">Back</div><div class="wb-meta" id="lm-Back">Back &middot; Biceps &middot; Rear Delts</div></button>
+    </div>
+    <div id="log-form" class="logform">
+      <button class="backbtn" onclick="backToHome()">&larr; Back</button>
+      <div class="okmsg" id="okmsg"></div>
+      <input type="date" class="datein" id="log-date">
+      <div id="log-exs"></div>
+      <button class="savebtn" onclick="saveSession()" style="background:#16a34a">Complete workout</button>
+    </div>
+  </div>
+  <div id="tc-co" class="tc">
+    <p class="clbl">Next session recommendations</p>
+    <div class="pills" id="co-pills"></div>
+    <div id="co-recs"><div class="ldrec">Select a workout above</div></div>
+    <p class="clbl" style="margin-top:14px">Ask your coach</p>
+    <div class="chatwrap">
+      <div class="qrow">
+        <button class="qbtn" onclick="q('What are my biggest strength gains?')">Top gains</button>
+        <button class="qbtn" onclick="q('Which lifts am I plateauing on?')">Plateaus</button>
+        <button class="qbtn" onclick="q('What new exercises should I add?')">Add exercises</button>
+        <button class="qbtn" onclick="q('Any muscle imbalances?')">Imbalances</button>
+        <button class="qbtn" onclick="q('Adjust training for Achilles and hip flexor issues?')">Injury advice</button>
+      </div>
+      <div class="msgs" id="msgs"><div class="emp">Ask anything about your training.</div></div>
+      <div class="irow">
+        <textarea class="cin" id="cin" rows="1" placeholder="Ask your coach..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+        <button class="sbtn" id="sbtn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var LAST={"Push": {"Bench Press": {"date": "2026-05-06", "sets": [{"reps": 8, "weight": 135}, {"reps": 8, "weight": 155}, {"reps": 7, "weight": 155}, {"reps": 7, "weight": 155}]}, "Incline Dumbbell Press": {"date": "2026-05-06", "sets": [{"reps": 8, "weight": 60}, {"reps": 6, "weight": 60}, {"reps": 6, "weight": 60}]}, "Dumbbell Lateral Raise": {"date": "2026-05-06", "sets": [{"reps": 10, "weight": 20}, {"reps": 10, "weight": 20}, {"reps": 10, "weight": 20}]}, "Arnold Press": {"date": "2026-05-06", "sets": [{"reps": 10, "weight": 30}, {"reps": 10, "weight": 30}, {"reps": 10, "weight": 30}]}, "Cable Tricep Pushdown": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 95}, {"reps": 12, "weight": 95}, {"reps": 12, "weight": 95}]}, "Dumbbell Chest Fly": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 30}, {"reps": 12, "weight": 30}, {"reps": 12, "weight": 30}]}, "Chest Dips": {"date": "2026-05-06", "sets": [{"reps": 6}, {"reps": 5}, {"reps": 6}]}}, "Legs": {"Barbell Squat": {"date": "2026-05-08", "sets": [{"reps": 10, "weight": 135}, {"reps": 6, "weight": 225}, {"reps": 6, "weight": 225}, {"reps": 6, "weight": 225}]}, "Romanian Deadlift": {"date": "2026-05-08", "sets": [{"reps": 8, "weight": 60}, {"reps": 8, "weight": 60}, {"reps": 8, "weight": 60}]}, "Calf Raise": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 25}, {"reps": 20, "weight": 25}, {"reps": 20, "weight": 25}]}, "Walking Lunges": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}]}, "Barbell Glute Bridge": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 175}, {"reps": 12, "weight": 175}, {"reps": 12, "weight": 175}]}, "Hamstring Curl": {"date": "2026-05-08", "sets": [{"reps": 10, "weight": 120}, {"reps": 10, "weight": 120}, {"reps": 10, "weight": 120}]}, "Goblet Squat": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 35}, {"reps": 12, "weight": 35}, {"reps": 12, "weight": 35}]}}, "Back": {"Barbell Deadlift": {"date": "2026-05-09", "sets": [{"reps": 10, "weight": 135}, {"reps": 6, "weight": 245}, {"reps": 6, "weight": 245}, {"reps": 6, "weight": 245}]}, "Pull-Ups": {"date": "2026-05-09", "sets": [{"reps": 12, "grip": "Neutral"}, {"reps": 9, "grip": "Wide"}, {"reps": 7, "grip": "Neutral"}, {"reps": 7, "grip": "Wide"}]}, "Face Pulls": {"date": "2026-05-09", "sets": [{"reps": 11, "weight": 44}, {"reps": 11, "weight": 44}, {"reps": 11, "weight": 44}]}, "Single Arm Dumbbell Row": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 50}, {"reps": 12, "weight": 50}, {"reps": 12, "weight": 50}]}, "Cable Lat Pulldown": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 121}, {"reps": 12, "weight": 121}, {"reps": 12, "weight": 121}]}, "Barbell Shrugs": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 70}, {"reps": 14, "weight": 70}, {"reps": 14, "weight": 70}]}, "Dumbbell Reverse Fly": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 20}, {"reps": 14, "weight": 20}, {"reps": 14, "weight": 20}]}}};
+var CHART={"Push": {"Bench Press": [{"d": "2025-08-21", "w": 145}, {"d": "2025-08-28", "w": 145}, {"d": "2025-09-05", "w": 145}, {"d": "2025-09-22", "w": 135}, {"d": "2025-10-04", "w": 145}, {"d": "2025-10-12", "w": 145}, {"d": "2025-10-23", "w": 145}, {"d": "2025-11-02", "w": 145}, {"d": "2025-11-15", "w": 145}, {"d": "2025-11-24", "w": 145}, {"d": "2025-12-16", "w": 135}, {"d": "2026-01-11", "w": 135}, {"d": "2026-01-19", "w": 135}, {"d": "2026-01-29", "w": 145}, {"d": "2026-02-05", "w": 145}, {"d": "2026-02-27", "w": 145}, {"d": "2026-03-06", "w": 145}, {"d": "2026-03-16", "w": 145}, {"d": "2026-03-26", "w": 155}, {"d": "2026-04-07", "w": 155}, {"d": "2026-04-16", "w": 155}, {"d": "2026-04-23", "w": 155}, {"d": "2026-04-30", "w": 155}, {"d": "2026-05-06", "w": 155}], "Incline Dumbbell Press": [{"d": "2025-08-21", "w": 50}, {"d": "2025-08-28", "w": 50}, {"d": "2025-09-05", "w": 50}, {"d": "2025-09-22", "w": 50}, {"d": "2025-10-04", "w": 50}, {"d": "2025-10-12", "w": 50}, {"d": "2025-10-23", "w": 50}, {"d": "2025-11-02", "w": 50}, {"d": "2025-11-15", "w": 50}, {"d": "2025-11-24", "w": 50}, {"d": "2025-12-16", "w": 50}, {"d": "2026-01-11", "w": 50}, {"d": "2026-01-19", "w": 50}, {"d": "2026-01-29", "w": 50}, {"d": "2026-02-05", "w": 50}, {"d": "2026-02-27", "w": 50}, {"d": "2026-03-06", "w": 50}, {"d": "2026-03-16", "w": 55}, {"d": "2026-03-26", "w": 55}, {"d": "2026-04-07", "w": 55}, {"d": "2026-04-16", "w": 55}, {"d": "2026-04-23", "w": 55}, {"d": "2026-04-30", "w": 55}, {"d": "2026-05-06", "w": 60}], "Arnold Press": [{"d": "2025-08-21", "w": 25}, {"d": "2025-08-28", "w": 25}, {"d": "2025-09-05", "w": 25}, {"d": "2025-09-22", "w": 25}, {"d": "2025-10-04", "w": 25}, {"d": "2025-10-12", "w": 25}, {"d": "2025-10-23", "w": 25}, {"d": "2025-11-02", "w": 25}, {"d": "2025-11-24", "w": 25}, {"d": "2025-12-16", "w": 25}, {"d": "2026-01-11", "w": 25}, {"d": "2026-01-19", "w": 25}, {"d": "2026-01-29", "w": 25}, {"d": "2026-02-05", "w": 25}, {"d": "2026-02-27", "w": 25}, {"d": "2026-03-06", "w": 25}, {"d": "2026-03-16", "w": 27.5}, {"d": "2026-03-26", "w": 27.5}, {"d": "2026-04-07", "w": 27.5}, {"d": "2026-04-16", "w": 27.5}, {"d": "2026-04-23", "w": 27.5}, {"d": "2026-04-30", "w": 27.5}, {"d": "2026-05-06", "w": 30}], "Cable Tricep Pushdown": [{"d": "2025-08-21", "w": 85}, {"d": "2025-08-28", "w": 85}, {"d": "2025-09-05", "w": 85}, {"d": "2025-09-22", "w": 85}, {"d": "2025-10-04", "w": 85}, {"d": "2025-10-12", "w": 85}, {"d": "2025-10-23", "w": 85}, {"d": "2025-11-02", "w": 85}, {"d": "2025-11-24", "w": 85}, {"d": "2025-12-16", "w": 85}, {"d": "2026-01-11", "w": 85}, {"d": "2026-01-19", "w": 85}, {"d": "2026-01-29", "w": 85}, {"d": "2026-02-05", "w": 85}, {"d": "2026-02-27", "w": 85}, {"d": "2026-03-06", "w": 85}, {"d": "2026-03-16", "w": 95}, {"d": "2026-03-26", "w": 95}, {"d": "2026-04-07", "w": 95}, {"d": "2026-04-16", "w": 95}, {"d": "2026-04-23", "w": 95}, {"d": "2026-04-30", "w": 95}, {"d": "2026-05-06", "w": 95}], "Dumbbell Chest Fly": [{"d": "2025-08-21", "w": 25}, {"d": "2025-08-28", "w": 25}, {"d": "2025-09-05", "w": 25}, {"d": "2025-10-04", "w": 27.5}, {"d": "2025-10-12", "w": 25}, {"d": "2025-10-23", "w": 27.5}, {"d": "2025-11-02", "w": 27.5}, {"d": "2025-11-15", "w": 27.5}, {"d": "2025-11-24", "w": 27.5}, {"d": "2025-12-16", "w": 25}, {"d": "2026-01-11", "w": 25}, {"d": "2026-01-19", "w": 25}, {"d": "2026-01-29", "w": 25}, {"d": "2026-02-05", "w": 25}, {"d": "2026-02-27", "w": 25}, {"d": "2026-03-06", "w": 27.5}, {"d": "2026-03-16", "w": 27.5}, {"d": "2026-03-26", "w": 27.5}, {"d": "2026-04-07", "w": 27.5}, {"d": "2026-04-16", "w": 30}, {"d": "2026-04-23", "w": 30}, {"d": "2026-04-30", "w": 30}, {"d": "2026-05-06", "w": 30}]}, "Legs": {"Barbell Squat": [{"d": "2025-08-23", "w": 155}, {"d": "2025-08-29", "w": 185}, {"d": "2025-09-08", "w": 185}, {"d": "2025-09-24", "w": 185}, {"d": "2025-10-06", "w": 185}, {"d": "2025-10-20", "w": 185}, {"d": "2025-11-04", "w": 195}, {"d": "2025-11-17", "w": 195}, {"d": "2025-12-01", "w": 195}, {"d": "2025-12-20", "w": 185}, {"d": "2026-01-13", "w": 155}, {"d": "2026-01-21", "w": 165}, {"d": "2026-01-31", "w": 185}, {"d": "2026-03-11", "w": 155}, {"d": "2026-03-17", "w": 165}, {"d": "2026-03-26", "w": 165}, {"d": "2026-04-14", "w": 185}, {"d": "2026-04-21", "w": 195}, {"d": "2026-04-28", "w": 205}, {"d": "2026-05-03", "w": 215}, {"d": "2026-05-08", "w": 225}], "Romanian Deadlift": [{"d": "2025-08-23", "w": 45}, {"d": "2025-08-29", "w": 45}, {"d": "2025-09-08", "w": 45}, {"d": "2025-09-24", "w": 45}, {"d": "2025-10-06", "w": 45}, {"d": "2025-10-20", "w": 45}, {"d": "2025-11-04", "w": 45}, {"d": "2025-11-17", "w": 50}, {"d": "2025-12-01", "w": 50}, {"d": "2025-12-20", "w": 50}, {"d": "2026-01-13", "w": 50}, {"d": "2026-01-21", "w": 50}, {"d": "2026-01-31", "w": 50}, {"d": "2026-03-11", "w": 45}, {"d": "2026-03-17", "w": 45}, {"d": "2026-03-26", "w": 50}, {"d": "2026-04-14", "w": 50}, {"d": "2026-04-21", "w": 55}, {"d": "2026-04-28", "w": 55}, {"d": "2026-05-03", "w": 55}, {"d": "2026-05-08", "w": 60}], "Barbell Glute Bridge": [{"d": "2025-08-29", "w": 155}, {"d": "2025-09-08", "w": 155}, {"d": "2025-09-24", "w": 155}, {"d": "2026-01-13", "w": 135}, {"d": "2026-01-21", "w": 135}, {"d": "2026-01-31", "w": 145}, {"d": "2026-03-17", "w": 135}, {"d": "2026-03-26", "w": 145}, {"d": "2026-04-14", "w": 155}, {"d": "2026-04-21", "w": 165}, {"d": "2026-04-28", "w": 165}, {"d": "2026-05-03", "w": 175}, {"d": "2026-05-08", "w": 175}], "Hamstring Curl": [{"d": "2025-08-23", "w": 100}, {"d": "2025-08-29", "w": 110}, {"d": "2025-09-08", "w": 110}, {"d": "2025-09-24", "w": 110}, {"d": "2025-10-06", "w": 110}, {"d": "2025-10-20", "w": 110}, {"d": "2025-11-04", "w": 120}, {"d": "2025-12-01", "w": 120}, {"d": "2025-12-20", "w": 110}, {"d": "2026-01-13", "w": 110}, {"d": "2026-01-21", "w": 110}, {"d": "2026-01-31", "w": 110}, {"d": "2026-03-26", "w": 100}, {"d": "2026-04-14", "w": 100}, {"d": "2026-04-21", "w": 110}, {"d": "2026-04-28", "w": 110}, {"d": "2026-05-03", "w": 110}, {"d": "2026-05-08", "w": 120}]}, "Back": {"Barbell Deadlift": [{"d": "2025-08-19", "w": 175}, {"d": "2025-08-25", "w": 185}, {"d": "2025-09-02", "w": 185}, {"d": "2025-09-19", "w": 185}, {"d": "2025-09-29", "w": 185}, {"d": "2025-10-10", "w": 185}, {"d": "2025-10-17", "w": 185}, {"d": "2025-10-27", "w": 195}, {"d": "2025-11-08", "w": 195}, {"d": "2025-11-20", "w": 195}, {"d": "2025-12-22", "w": 185}, {"d": "2026-01-15", "w": 155}, {"d": "2026-01-26", "w": 165}, {"d": "2026-02-04", "w": 185}, {"d": "2026-02-25", "w": 195}, {"d": "2026-03-05", "w": 185}, {"d": "2026-03-10", "w": 185}, {"d": "2026-03-19", "w": 195}, {"d": "2026-03-28", "w": 205}, {"d": "2026-04-09", "w": 215}, {"d": "2026-04-18", "w": 225}, {"d": "2026-04-27", "w": 235}, {"d": "2026-05-05", "w": 240}, {"d": "2026-05-09", "w": 245}], "Face Pulls": [{"d": "2025-08-19", "w": 33}, {"d": "2025-08-25", "w": 33}, {"d": "2025-09-02", "w": 33}, {"d": "2025-09-19", "w": 33}, {"d": "2025-09-29", "w": 33}, {"d": "2025-10-10", "w": 33}, {"d": "2025-10-17", "w": 35}, {"d": "2025-10-27", "w": 33}, {"d": "2025-11-08", "w": 35}, {"d": "2025-11-20", "w": 33.5}, {"d": "2025-12-22", "w": 35}, {"d": "2026-01-15", "w": 27.5}, {"d": "2026-01-26", "w": 33}, {"d": "2026-02-04", "w": 33}, {"d": "2026-02-25", "w": 38.5}, {"d": "2026-03-05", "w": 38.5}, {"d": "2026-03-10", "w": 38.5}, {"d": "2026-03-19", "w": 38.5}, {"d": "2026-03-28", "w": 38.5}, {"d": "2026-04-09", "w": 38.5}, {"d": "2026-04-18", "w": 38.5}, {"d": "2026-04-27", "w": 38.5}, {"d": "2026-05-05", "w": 44}, {"d": "2026-05-09", "w": 44}], "Single Arm Dumbbell Row": [{"d": "2025-08-25", "w": 40}, {"d": "2025-09-02", "w": 40}, {"d": "2025-09-19", "w": 40}, {"d": "2025-09-29", "w": 40}, {"d": "2025-10-10", "w": 45}, {"d": "2025-10-17", "w": 45}, {"d": "2025-10-27", "w": 45}, {"d": "2025-11-08", "w": 45}, {"d": "2025-12-22", "w": 40}, {"d": "2026-01-15", "w": 40}, {"d": "2026-01-26", "w": 40}, {"d": "2026-02-04", "w": 40}, {"d": "2026-03-05", "w": 40}, {"d": "2026-03-10", "w": 45}, {"d": "2026-03-19", "w": 45}, {"d": "2026-03-28", "w": 45}, {"d": "2026-04-09", "w": 45}, {"d": "2026-04-18", "w": 50}, {"d": "2026-04-27", "w": 50}, {"d": "2026-05-05", "w": 50}, {"d": "2026-05-09", "w": 50}], "Cable Lat Pulldown": [{"d": "2025-08-25", "w": 110}, {"d": "2025-09-02", "w": 110}, {"d": "2025-09-19", "w": 110}, {"d": "2025-09-29", "w": 110}, {"d": "2025-10-10", "w": 110}, {"d": "2025-10-17", "w": 110}, {"d": "2025-10-27", "w": 110}, {"d": "2025-11-08", "w": 110}, {"d": "2025-12-22", "w": 110}, {"d": "2026-01-15", "w": 110}, {"d": "2026-01-26", "w": 110}, {"d": "2026-02-04", "w": 110}, {"d": "2026-03-19", "w": 110}, {"d": "2026-03-28", "w": 110}, {"d": "2026-04-09", "w": 110}, {"d": "2026-04-18", "w": 121}, {"d": "2026-04-27", "w": 121}, {"d": "2026-05-05", "w": 121}, {"d": "2026-05-09", "w": 121}]}};
+var HISTORY="Push:\nBench Press: 145lb to 155lb working sets. Sessions: Aug21,Aug28,Sep05,Sep22,Oct04,Oct12,Oct23,Nov02,Nov15,Nov24,Dec16,Jan11,Jan19,Jan29,Feb05,Feb27,Mar06,Mar16,Mar26,Apr07,Apr16,Apr23,Apr30,May06\nIncline Dumbbell Press: 50lb to 60lb. Progress: 50lb Aug-Mar, 55lb Mar-Apr, 60lb May\nDumbbell Lateral Raise: 15lb to 20lb. Steady at 15lb until Mar16, moved to 17.5lb, then 20lb May06\nArnold Press: 25lb to 30lb. At 25lb until Mar16, 27.5lb until May06, 30lb May06\nCable Tricep Pushdown: 85lb to 95lb. At 85lb until Mar16, moved to 95lb\nDumbbell Chest Fly: 25lb to 30lb. Oscillated 25-27.5lb, moved to 30lb Apr16\nChest Dips: Bodyweight AMRAP. Recent: 6/5/6 reps May06\n\nLegs:\nBarbell Squat: 135lb to 225lb. Major progression: 135 warmup + working sets climbing from 155 to 225lb. Recent 3 sessions: 205, 215, 225\nRomanian Deadlift: 45lb to 60lb. Steady progression. Recent: 55, 55, 55, 60lb\nCalf Raise: 20lb to 25lb. Moved to 22.5lb Apr21, 25lb May08\nWalking Lunges: 15lb to 17.5lb. Recent: 15lb most sessions, 17.5lb May08\nBarbell Glute Bridge: 155lb to 175lb. Recent sessions climbing: 155, 165, 175lb\nHamstring Curl: 110lb to 120lb. Recent: back to 120lb May08\nGoblet Squat: 26lb to 35lb. Moved to 35lb May08\n\nBack:\nBarbell Deadlift: 135lb to 245lb. Warmup at 135, working sets: 185 Aug-Nov, dip Jan, back to 195 Feb-Mar, then 205,215,225,235,240,245 Apr-May\nPull-Ups: Bodyweight. Neutral grip sets 1+3, wide grip sets 2+4. Last: N12/W9/N7/W7\nFace Pulls: 33lb to 44lb. At 33-35lb until Feb, jumped to 38.5lb Feb25, 44lb May05\nSingle Arm Dumbbell Row: 40lb to 50lb. At 40-45lb until Apr, 50lb Apr18+\nCable Lat Pulldown: 110lb to 121lb. Steady at 110lb, moved to 121lb Apr18\nBarbell Shrugs: 65lb to 70lb. At 65lb until Feb, 70lb from Feb25\nDumbbell Reverse Fly: 15lb to 20lb. At 15-17.5lb until Apr, 20lb from Apr09";
+var COLORS=["#2563eb","#d97706","#16a34a","#9333ea","#dc2626","#0891b2","#be185d"];
+var pchart=null,chatHist=[],activeOv="Push",activePr="Push",activeCo=null,logWo=null,recsCache={};
+var PU_GRIPS=["Neutral","Wide","Neutral","Wide"];
+var BW=["Chest Dips","Pull-Ups"];
+var WOS={
+  Push:["Bench Press","Incline Dumbbell Press","Dumbbell Lateral Raise","Arnold Press","Cable Tricep Pushdown","Dumbbell Chest Fly","Chest Dips"],
+  Legs:["Barbell Squat","Romanian Deadlift","Calf Raise","Walking Lunges","Barbell Glute Bridge","Hamstring Curl","Goblet Squat"],
+  Back:["Barbell Deadlift","Pull-Ups","Face Pulls","Single Arm Dumbbell Row","Cable Lat Pulldown","Barbell Shrugs","Dumbbell Reverse Fly"]
+};
+var _mem={};
+function getApiKey(){return localStorage.getItem("ak")||"";}
+function saveApiKey(k){localStorage.setItem("ak",k);}
+var currentPlan={};
+var workoutMode="full";
+function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
+function saveS(h){_mem=h;try{localStorage.setItem("wt3",JSON.stringify(h));}catch(e){}}
+function fmtS(sets){
+  return sets.map(function(st){
+    var g=st.grip?"("+st.grip[0]+") ":"";
+    if(st.reps&&st.weight&&st.weight>5)return g+Math.round(st.reps)+"r x "+Math.round(st.weight)+"lb";
+    if(st.reps)return g+Math.round(st.reps)+"r";
+    return null;
+  }).filter(Boolean).join(" / ");
+}
+function tab(id){
+  ["ov","pr","log","co"].forEach(function(t){
+    document.getElementById("tc-"+t).classList.remove("on");
+    document.getElementById("btn-"+t).classList.remove("on");
+  });
+  document.getElementById("tc-"+id).classList.add("on");
+  document.getElementById("btn-"+id).classList.add("on");
+}
+function mkPills(cid,names,active,cb){
+  var el=document.getElementById(cid);
+  el.innerHTML="";
+  names.forEach(function(n){
+    var b=document.createElement("button");
+    b.className="pill"+(n===active?" on":"");
+    b.textContent=n;
+    b.onclick=function(){
+      el.querySelectorAll(".pill").forEach(function(p){p.classList.remove("on");});
+      b.classList.add("on");
+      cb(n);
+    };
+    el.appendChild(b);
+  });
+}
+function getLastForWorkout(wo){
+  var stored=loadS();
+  var last=JSON.parse(JSON.stringify(LAST[wo]||{}));
+  var sl=stored[wo]||{};
+  Object.keys(sl).forEach(function(en){
+    var ss=sl[en];
+    if(!ss||!ss.length)return;
+    ss.sort(function(a,b){return b.date.localeCompare(a.date);});
+    if(!last[en]||ss[0].date>last[en].date)last[en]=ss[0];
+  });
+  return last;
+}
+function buildMetrics(){
+  var dlPts=(CHART["Back"]||{})["Barbell Deadlift"]||[];
+  var sqPts=(CHART["Legs"]||{})["Barbell Squat"]||[];
+  var bpPts=(CHART["Push"]||{})["Bench Press"]||[];
+  function mx(pts){return pts.length?Math.max.apply(null,pts.map(function(p){return p.w;})):0;}
+  var el=document.getElementById("ov-metrics");
+  el.innerHTML="";
+  [["Deadlift",mx(dlPts),"135"],["Squat",mx(sqPts),"135"],["Bench",mx(bpPts),"working sets"]].forEach(function(row){
+    var d=document.createElement("div"); d.className="mc";
+    d.innerHTML="<div class='ml'>"+row[0]+"</div><div class='mv'>"+row[1]+"lb</div><div class='ms'>up from "+row[2]+"lb</div>";
+    el.appendChild(d);
+  });
+}
+function renderOv(){
+  var last=getLastForWorkout(activeOv);
+  var chart=CHART[activeOv]||{};
+  var list=document.createElement("div"); list.className="exlist";
+  Object.keys(last).forEach(function(name){
+    var sess=last[name]; var pts=chart[name]||[];
+    var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
+    var cls=diff>0?"up":diff<-5?"dn":"fl";
+    var sym=diff>0?"↑":diff<-5?"↓":"→";
+    var diffStr=name==="Pull-Ups"?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
+    var row=document.createElement("div"); row.className="exrow";
+    var left=document.createElement("div"); left.style.minWidth="0";
+    var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
+    var meta=document.createElement("div"); meta.className="exm";
+    meta.innerHTML="Last: "+sess.date+"<br>"+fmtS(sess.sets);
+    left.appendChild(nm); left.appendChild(meta);
+    var right=document.createElement("div"); right.className="ext "+cls;
+    right.textContent=sym+" "+diffStr;
+    row.appendChild(left); row.appendChild(right);
+    list.appendChild(row);
+  });
+  var el=document.getElementById("ov-exlist"); el.innerHTML=""; el.appendChild(list);
+}
+function renderChart(){
+  var exs=JSON.parse(JSON.stringify(CHART[activePr]||{}));
+  var stored=loadS(); var sl=stored[activePr]||{};
+  Object.keys(sl).forEach(function(en){
+    if(!exs[en])return;
+    sl[en].forEach(function(s){
+      var weights=s.sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+      var val=weights.length?Math.max.apply(null,weights):0;
+      if(val){var ei=exs[en].findIndex(function(p){return p.d===s.date;});if(ei>=0)exs[en][ei].w=val;else exs[en].push({d:s.date,w:val});}
+    });
+    exs[en].sort(function(a,b){return a.d.localeCompare(b.d);});
+  });
+  var dset={};
+  Object.values(exs).forEach(function(pts){pts.forEach(function(p){dset[p.d]=1;});});
+  var allDates=Object.keys(dset).sort();
+  var labels=allDates.map(function(d){var dt=new Date(d+"T12:00:00");return (dt.getMonth()+1)+"/"+(dt.getDate());});
+  var entries=Object.entries(exs).slice(0,6);
+  var datasets=entries.map(function(e,i){
+    var bd={};e[1].forEach(function(p){bd[p.d]=p.w;});
+    return{label:e[0],data:allDates.map(function(d){return bd[d]!==undefined?bd[d]:null;}),borderColor:COLORS[i],backgroundColor:"transparent",pointRadius:2,tension:0.3,spanGaps:true};
+  });
+  var leg=document.getElementById("pr-leg"); leg.innerHTML="";
+  entries.forEach(function(e,i){
+    var d=document.createElement("div"); d.className="cli";
+    var sw=document.createElement("div"); sw.className="csw"; sw.style.background=COLORS[i];
+    var t=document.createTextNode(e[0]);
+    d.appendChild(sw); d.appendChild(t); leg.appendChild(d);
+  });
+  if(pchart)pchart.destroy();
+  pchart=new Chart(document.getElementById("pr-chart"),{
+    type:"line",data:{labels:labels,datasets:datasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:10},autoSkip:true,maxTicksLimit:10},grid:{color:"rgba(0,0,0,.05)"}},
+              y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
+  });
+}
+function buildLogMeta(){
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wn){
+    var last=LAST[wn]||{}; var sl=stored[wn]||{};
+    var dates=Object.values(last).map(function(s){return s.date;});
+    Object.values(sl).forEach(function(ss){if(ss&&ss.length)dates.push(ss[ss.length-1].date);});
+    dates=dates.filter(Boolean).sort();
+    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" · Last: "+dates[dates.length-1];}
+  });
+}
+function startLog(wo){
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
+  var stored=loadS();
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+  WOS[wo].forEach(function(exName){
+    var base=LAST[wo]?LAST[wo][exName]:null; var last=base;
+    var sl=(stored[wo]||{})[exName];
+    if(sl&&sl.length){sl.sort(function(a,b){return b.date.localeCompare(a.date);});if(!last||sl[0].date>last.date)last=sl[0];}
+    var isPU=exName==="Pull-Ups"; var isBW=BW.indexOf(exName)>=0;
+    var ls=last?last.sets:[]; var n=Math.max(ls.length,isPU?4:3);
+    // Build block using DOM
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
+    prevSpan.textContent=last?"Last: "+fmtS(last.sets):"No data";
+    head.appendChild(nameSpan); head.appendChild(prevSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    for(var i=0;i<n;i++){
+      var ps=ls[i]||null;
+      var rph=ps&&ps.reps?Math.round(ps.reps):"";
+      var wph=ps&&ps.weight&&ps.weight>5?Math.round(ps.weight):"";
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
+      row.appendChild(lbl);
+      if(isPU){
+        var gt=document.createElement("span"); gt.className="gtag"; gt.textContent=PU_GRIPS[i];
+        row.appendChild(gt);
+      }
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.placeholder="reps"+(rph?" ("+rph+")":"");
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW&&!isPU){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        wInput.placeholder="lbs"+(wph?" ("+wph+")":"");
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    }
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
+}
+function backToHome(){
+  logWo=null;
+  document.getElementById("log-home").style.display="block";
+  document.getElementById("log-form").classList.remove("show");
+}
+function saveSession(){
+  var date=document.getElementById("log-date").value;
+  if(!date){alert("Select a date");return;}
+  var stored=loadS();
+  if(!stored[logWo])stored[logWo]={};
+  var saved=0;
+  WOS[logWo].forEach(function(exName){
+    var isPU=exName==="Pull-Ups"; var sets=[]; var si=0;
+    while(true){
+      var ri=document.querySelector("[data-ex='"+exName+"'][data-si='"+si+"'][data-f='reps']");
+      if(!ri)break;
+      var wi=document.querySelector("[data-ex='"+exName+"'][data-si='"+si+"'][data-f='weight']");
+      var r=parseFloat(ri.value)||null;
+      var w=wi?parseFloat(wi.value)||null:null;
+      if(r!==null||w!==null){
+        var s={reps:r,weight:w};
+        if(isPU)s.grip=PU_GRIPS[si]||"Neutral";
+        sets.push(s);
+      }
+      si++;
+    }
+    if(sets.length){
+      if(!stored[logWo][exName])stored[logWo][exName]=[];
+      stored[logWo][exName]=stored[logWo][exName].filter(function(s){return s.date!==date;});
+      stored[logWo][exName].push({date:date,sets:sets});
+      saved++;
+    }
+  });
+  saveS(stored);
+  recsCache[logWo]=null;
+  // Update CHART
+  Object.keys(stored[logWo]||{}).forEach(function(exName){
+    if(!CHART[logWo])CHART[logWo]={};
+    if(!CHART[logWo][exName])CHART[logWo][exName]=[];
+    var sessions=stored[logWo][exName]||[];
+    sessions.forEach(function(s){
+      var weights=s.sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+      var val=exName==="Pull-Ups"?s.sets.filter(function(st){return st.reps;}).reduce(function(a,st){return a+st.reps;},0):(weights.length?Math.max.apply(null,weights):0);
+      if(val){
+        var pts=CHART[logWo][exName];
+        var ei=pts.findIndex(function(p){return p.d===s.date;});
+        if(ei>=0)pts[ei].w=val; else pts.push({d:s.date,w:val});
+      }
+    });
+    if(CHART[logWo][exName])CHART[logWo][exName].sort(function(a,b){return a.d.localeCompare(b.d);});
+  });
+  renderOv(); if(getApiKey()){document.getElementById("key-banner").style.display="none";}
+buildMetrics(); renderChart();
+  var msg=document.getElementById("okmsg");
+  msg.textContent="Workout complete! "+saved+" exercise"+(saved!==1?"s":"")+" logged for "+date;
+  msg.style.display="block";
+  // Return to overview after 2s
+  setTimeout(function(){
+    msg.style.display="none";
+    backToHome();
+    tab("ov");
+    var ovBtn=document.getElementById("btn-ov");
+    if(ovBtn)ovBtn.classList.add("on");
+  },2000);
+}
+var COACH_CONTEXT="ATHLETE PROFILE:\nFormer D1 soccer player, recreational soccer + running, bilateral Achilles tendinopathy, hip flexor strain.\nTraining split: Push / Legs / Back. Rotating days, roughly 1x/week each.\nKey issue: Has been doing nearly identical workouts for 12+ months with minimal variation. Needs more variety and better progressive overload.\n\nSTRICT RULES (always follow):\n1. Push ALWAYS starts with Bench Press. Legs ALWAYS starts with Barbell Squat. Back ALWAYS starts with Barbell Deadlift.\n2. The anchor exercise (Bench/Squat/Deadlift) gets ONE warmup set at ~60% of working weight for 8-10 reps, then working sets. No other exercise needs a warmup set.\n3. You can freely change set counts for any exercise \u2014 add sets for weak points, drop sets for maintenance moves.\n4. You can introduce ANY exercise that fits the movement pattern. Not limited to what the athlete has done before. Full gym available.\n5. Swap or replace plateaued exercises freely. Be bold \u2014 if something hasn't moved in months, change it.\n6. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight only.\n7. Achilles: avoid explosive calf work if flaring. Keep RDL controlled tempo. No box jumps or bounding.\n8. Hip flexor: avoid deep lunge positions if painful. Prefer hip hinge and glute-dominant patterns.\n\nEXERCISE HISTORY AND PLATEAU STATUS:\n\nPUSH:\n  Bench Press: 145lb to 155lb over 24 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 8r x 135lb | 8r x 155lb | 7r x 155lb | 7r x 155lb\n  Incline Dumbbell Press: 50lb to 60lb over 24 sessions [progressing]\n    Last: 8r x 60lb | 6r x 60lb | 6r x 60lb\n  Arnold Press: 25lb to 30lb over 23 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 10r x 30lb | 10r x 30lb | 10r x 30lb\n  Cable Tricep Pushdown: 85lb to 95lb over 23 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 12r x 95lb | 12r x 95lb | 12r x 95lb\n  Dumbbell Chest Fly: 25lb to 30lb over 23 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 12r x 30lb | 12r x 30lb | 12r x 30lb\n  Chest Dips: BW, last session 6/5/6 reps [PLATEAUED - add weight or replace]\n  Dumbbell Lateral Raise: 15lb to 20lb, recently unstuck [progressing]\n\nLEGS:\n  Barbell Squat: 155lb to 225lb over 21 sessions [progressing]\n    Last: 10r x 135lb | 6r x 225lb | 6r x 225lb | 6r x 225lb\n  Romanian Deadlift: 45lb to 60lb over 21 sessions [progressing]\n    Last: 8r x 60lb | 8r x 60lb | 8r x 60lb\n  Barbell Glute Bridge: 155lb to 175lb over 13 sessions [progressing]\n    Last: 12r x 175lb | 12r x 175lb | 12r x 175lb\n  Hamstring Curl: 100lb to 120lb over 18 sessions [progressing]\n    Last: 10r x 120lb | 10r x 120lb | 10r x 120lb\n  Calf Raise: 15lb to 25lb [progressing - but monitor Achilles]\n  Walking Lunges: BW to 17.5lb [progressing - monitor hip flexor]\n  Goblet Squat: 18lb to 35lb [progressing]\n\nBACK:\n  Barbell Deadlift: 175lb to 245lb over 24 sessions [progressing]\n    Last: 10r x 135lb | 6r x 245lb | 6r x 245lb | 6r x 245lb\n  Face Pulls: 33lb to 44lb over 24 sessions [progressing]\n    Last: 11r x 44lb | 11r x 44lb | 11r x 44lb\n  Single Arm Dumbbell Row: 40lb to 50lb over 21 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 12r x 50lb | 12r x 50lb | 12r x 50lb\n  Cable Lat Pulldown: 110lb to 121lb over 19 sessions [PLATEAUED - change rep scheme or swap]\n    Last: 12r x 121lb | 12r x 121lb | 12r x 121lb\n  Pull-Ups: BW neutral/wide alternating, last N:12/W:9/N:7/W:7 [progressing]\n  Barbell Shrugs: 65lb to 70lb [progressing]\n  Dumbbell Reverse Fly: 15lb to 20lb [progressing]\n\nEXAMPLE NEW EXERCISES TO CONSIDER (not exhaustive \u2014 use any exercise that fits):\nPush: Incline Barbell Press, Cable Fly, Overhead Tricep Extension, Skull Crushers, Lateral Raise Machine, Close-Grip Bench, Pec Dec, Push-Up Variation, Z-Press\nLegs: Bulgarian Split Squat, Leg Press, Nordic Curl, Hip Thrust, Leg Extension, Step-Up, Hack Squat, Single-Leg RDL, Sissy Squat\nBack: Chest-Supported Row, T-Bar Row, Seated Cable Row, Straight-Arm Pulldown, Rack Pull, Farmer Carry, Meadows Row, Rear Delt Machine, High Row, Pendlay Row";
+async function loadRecs(wo,force){
+  if(!force&&recsCache[wo]){renderRecs(wo,recsCache[wo]);return;}
+  var el=document.getElementById("co-recs");
+  el.innerHTML="<div class='ldrec'>Building your "+wo+" plan...</div>";
+  var last=getLastForWorkout(wo);
+  var lastStr=Object.keys(last).map(function(name){
+    var sess=last[name];
+    return name+": "+fmtS(sess.sets);
+  }).join("\n");
+  var logCtx=buildLogContext(wo);
+  var isMini=workoutMode==="mini";
+  var prompt="You are an elite strength coach. Your athlete has been doing nearly identical workouts for 12+ months with too little variation and progressive overload. Your job is to design their NEXT "+wo+" session.\n\nATHLETE CONTEXT:\n"+COACH_CONTEXT+"\n\nLAST "+wo.toUpperCase()+" SESSION:\n"+lastStr+logCtx+"\n\nMODE: "+(isMini?"MINI WORKOUT - keep to 4 exercises max, shorter sets (2-3 sets each), prioritize the anchor lift and 3 key movements only. Total gym time ~30 minutes.":"FULL WORKOUT - full program, 5-7 exercises, standard sets. Total gym time ~60 minutes.")+"\n\nINSTRUCTIONS:\n1. For each exercise, decide: keep it, replace it, or add a new one alongside it.\n2. If an exercise is PLATEAUED, either change the rep scheme (e.g. switch to 5x5 or 4x6) OR replace/swap it with a variation.\n3. Recommend exactly what to do this session: sets x reps x weight. Be specific. Include warmup set for anchor lift only.\n4. You can add new exercises if the program has gaps or if variety would help.\n5. Account for Achilles tendinopathy and hip flexor strain on lower body exercises.\n6. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight only.\n\nRespond ONLY with a JSON array. Each item:\n{\"exercise\":\"name\",\"status\":\"keep|swap|new\",\"target\":\"e.g. 1x8@95lb warmup then 5x5@165lb\",\"action\":\"increase|stay|technique|swap|new\",\"reason\":\"one sentence why\"}\n\nInclude every exercise in order. Anchor lift first.";
+  try{
+    var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
+    var rdata=await resp.json();
+    var txt=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+    var recs=JSON.parse(txt); recsCache[wo]=recs; renderRecs(wo,recs);
+  }catch(e){
+    var errDiv=document.createElement("div"); errDiv.className="ldrec";
+    errDiv.textContent="Coach needs internet. ";
+    var retryBtn=document.createElement("button");
+    retryBtn.textContent="Retry";
+    retryBtn.style.cssText="background:none;border:none;color:#2563eb;cursor:pointer;font-size:13px";
+    retryBtn.onclick=function(){loadRecs(activeCo);};
+    errDiv.appendChild(retryBtn);
+    el.innerHTML=""; el.appendChild(errDiv);
+  }
+}
+function renderRecs(wo,recs){
+  var el=document.getElementById("co-recs"); el.innerHTML="";
+  // Store plan
+  currentPlan[wo]=recs;
+  WOS[wo]=recs.map(function(r){return r.exercise;});
+  if(!CHART[wo])CHART[wo]={};
+  recs.forEach(function(r){if(!CHART[wo][r.exercise])CHART[wo][r.exercise]=[];});
+
+  // Mode toggle
+  var modeBar=document.createElement("div"); modeBar.className="mode-bar";
+  var fullBtn=document.createElement("button");
+  fullBtn.className="mode-btn"+(workoutMode==="full"?" mode-on":"");
+  fullBtn.textContent="Full workout"; fullBtn.onclick=function(){workoutMode="full";loadRecs(wo,true);};
+  var miniBtn=document.createElement("button");
+  miniBtn.className="mode-btn"+(workoutMode==="mini"?" mode-on":"");
+  miniBtn.textContent="Mini workout"; miniBtn.onclick=function(){workoutMode="mini";loadRecs(wo,true);};
+  modeBar.appendChild(fullBtn); modeBar.appendChild(miniBtn);
+  el.appendChild(modeBar);
+
+  recs.forEach(function(rec,idx){
+    var card=document.createElement("div"); card.className="reccard";
+    // Header
+    var head=document.createElement("div"); head.className="rechead";
+    var nm=document.createElement("span"); nm.className="recname"; nm.textContent=rec.exercise;
+    var action=rec.action||"stay";
+    var bc=action==="increase"?"bup":action==="new"?"bnew":action==="swap"?"bswap":action==="technique"?"btech":"bhold";
+    var bl=action==="increase"?"↑ Increase":action==="new"?"★ New":action==="swap"?"⇄ Swap":action==="technique"?"Form focus":"Hold";
+    var badge=document.createElement("span"); badge.className="recbadge "+bc; badge.textContent=bl;
+    head.appendChild(nm); head.appendChild(badge);
+    // Body
+    var body=document.createElement("div"); body.className="recbody";
+    var tgt=document.createElement("div"); tgt.className="rectgt"; tgt.textContent=rec.target;
+    var rsn=document.createElement("div"); rsn.className="recreason"; rsn.textContent=rec.reason;
+    body.appendChild(tgt); body.appendChild(rsn);
+    // Tutorial
+    var tutDiv=document.createElement("div"); tutDiv.className="tut-area"; tutDiv.style.display="none";
+    tutDiv.id="tut-"+wo+"-"+idx;
+    body.appendChild(tutDiv);
+    // Action row
+    var actRow=document.createElement("div"); actRow.className="rec-actions";
+    var tutBtn=document.createElement("button"); tutBtn.className="rec-act-btn";
+    tutBtn.textContent="How to do this";
+    (function(ex,tid){
+      tutBtn.onclick=function(){
+        var d=document.getElementById(tid);
+        if(d.style.display==="none"){
+          d.style.display="block";
+          if(!d.dataset.loaded){
+            d.textContent="Loading...";
+            d.dataset.loaded="1";
+            fetchTutorial(ex,d);
+          }
+        } else {d.style.display="none";}
+      };
+    })(rec.exercise,"tut-"+wo+"-"+idx);
+    var swapBtn=document.createElement("button"); swapBtn.className="rec-act-btn";
+    swapBtn.textContent="Swap exercise";
+    (function(ex,i){
+      swapBtn.onclick=function(){swapExercise(wo,i,ex);};
+    })(rec.exercise,idx);
+    actRow.appendChild(tutBtn); actRow.appendChild(swapBtn);
+    body.appendChild(actRow);
+    card.appendChild(head); card.appendChild(body);
+    el.appendChild(card);
+  });
+
+  if(!recs.length){el.innerHTML="<div class='ldrec'>No recommendations.</div>";return;}
+
+  // Looks good button
+  var lgBtn=document.createElement("button"); lgBtn.className="looks-good-btn";
+  lgBtn.textContent="Looks good → Start logging";
+  lgBtn.onclick=function(){
+    tab("log");
+    startLogFromPlan(wo);
+  };
+  el.appendChild(lgBtn);
+}
+
+async function fetchTutorial(exercise,el){
+  var prompt="Give a concise exercise tutorial for: "+exercise+". Cover: proper form in 2-3 sentences, key cues, and one common mistake to avoid. Keep it under 80 words total.";
+  // Build UI immediately
+  el.innerHTML="";
+  // Image
+  var imgWrap=document.createElement("div"); imgWrap.style.cssText="margin-bottom:8px;border-radius:8px;overflow:hidden;background:#f0f0ee;height:160px;display:flex;align-items:center;justify-content:center;";
+  var img=document.createElement("img");
+  var query=encodeURIComponent(exercise+" exercise form");
+  img.src="https://source.unsplash.com/400x200/?"+query;
+  img.style.cssText="width:100%;height:160px;object-fit:cover;";
+  img.onerror=function(){imgWrap.style.display="none";};
+  imgWrap.appendChild(img); el.appendChild(imgWrap);
+  // YouTube link
+  var ytLink=document.createElement("a");
+  ytLink.href="https://www.youtube.com/results?search_query="+encodeURIComponent(exercise+" exercise tutorial form");
+  ytLink.target="_blank";
+  ytLink.style.cssText="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#dc2626;text-decoration:none;margin-bottom:8px;font-weight:500;";
+  ytLink.innerHTML="&#9654; Watch on YouTube";
+  el.appendChild(ytLink);
+  // Text
+  var txtEl=document.createElement("div"); txtEl.textContent="Loading..."; el.appendChild(txtEl);
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:200,messages:[{role:"user",content:prompt}]})});
+    var d=await r.json();
+    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    txtEl.textContent=txt;
+  }catch(e){txtEl.textContent="Tutorial unavailable.";}
+}
+
+async function swapExercise(wo,idx,currentEx){
+  var card=document.getElementById("co-recs").querySelectorAll(".reccard")[idx];
+  var tgt=card.querySelector(".rectgt");
+  var rsn=card.querySelector(".recreason");
+  tgt.textContent="Finding alternative..."; rsn.textContent="";
+  var plan=currentPlan[wo]||[];
+  var others=plan.map(function(r){return r.exercise;}).filter(function(e){return e!==currentEx;}).join(", ");
+  var prompt="Suggest ONE alternative exercise to replace "+currentEx+" in a "+wo+" workout. Other exercises: "+others+". Athlete has Achilles tendinopathy and hip flexor strain. Respond ONLY with JSON object: exercise, target, action (swap), reason.";
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:200,messages:[{role:"user",content:prompt}]})});
+    var d=await r.json();
+    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+    var alt=JSON.parse(txt);
+    currentPlan[wo][idx]=alt;
+    WOS[wo][idx]=alt.exercise;
+    if(!CHART[wo][alt.exercise])CHART[wo][alt.exercise]=[];
+    var nm=card.querySelector(".recname"); nm.textContent=alt.exercise;
+    tgt.textContent=alt.target; rsn.textContent=alt.reason;
+    var badge=card.querySelector(".recbadge"); badge.textContent="⇄ Swap"; badge.className="recbadge bswap";
+  }catch(e){tgt.textContent="Swap failed — try again."; rsn.textContent="";}
+}
+
+function startLogFromPlan(wo){
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
+  var plan=currentPlan[wo]||[];
+  var stored=loadS();
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+  plan.forEach(function(rec){
+    var exName=rec.exercise;
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    // Parse target for pre-fill hints e.g. "5x5 @ 165lb" or "3x10 @ 35lb"
+    var targetSets=3; var targetReps=""; var targetWeight="";
+    var m=rec.target.match(/([0-9]+)x([0-9]+)[\s]*@?[\s]*([0-9\.]+)?/);
+    if(m){targetSets=parseInt(m[1])||3; targetReps=m[2]||""; targetWeight=m[3]||"";}
+    // Also check warmup note
+    var hasWarmup=rec.target.toLowerCase().indexOf("warmup")>=0||rec.target.toLowerCase().indexOf("warm")>=0;
+    var last=(stored[wo]||{})[exName];
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var targetSpan=document.createElement("span"); targetSpan.className="ex-prev";
+    targetSpan.textContent=rec.target;
+    head.appendChild(nameSpan); head.appendChild(targetSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    var totalSets=hasWarmup?targetSets+1:targetSets;
+    for(var i=0;i<totalSets;i++){
+      var isWarmup=hasWarmup&&i===0;
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl";
+      lbl.textContent=isWarmup?"Warmup":"Set "+(hasWarmup?i:i+1);
+      row.appendChild(lbl);
+      if(isPU){
+        var gt=document.createElement("span"); gt.className="gtag";
+        gt.textContent=PU_GRIPS[i]||"Neutral"; row.appendChild(gt);
+      }
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.placeholder=targetReps?"reps ("+targetReps+")":"reps";
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        if(isWarmup&&targetWeight){
+          wInput.placeholder="lbs (~"+(Math.round(parseFloat(targetWeight)*0.6/5)*5)+")";
+        } else {
+          wInput.placeholder=targetWeight?"lbs ("+targetWeight+")":"lbs";
+        }
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    }
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
+}
+
+function appendWorkoutLog(entry){
+  try{
+    var log=JSON.parse(localStorage.getItem("wlog")||"[]");
+    log.push(entry);
+    // Keep last 50 sessions
+    if(log.length>50)log=log.slice(log.length-50);
+    localStorage.setItem("wlog",JSON.stringify(log));
+  }catch(e){}
+}
+function getWorkoutLog(){
+  try{return JSON.parse(localStorage.getItem("wlog")||"[]");}catch(e){return [];}
+}
+function buildLogContext(wo){
+  var log=getWorkoutLog().filter(function(e){return e.workout===wo;});
+  if(!log.length)return "";
+  var lines=["","COMPLETED SESSION LOG (most recent first):"];
+  log.slice().reverse().slice(0,10).forEach(function(entry){
+    lines.push(entry.date+":");
+    entry.exercises.forEach(function(ex){
+      var line="  "+ex.name+": did "+ex.actual;
+      if(ex.target)line+=" (target was "+ex.target+")";
+      lines.push(line);
+    });
+  });
+  return lines.join("\n");
+}
+function q(txt){document.getElementById("cin").value=txt;sendMsg();}
+function addMsg(role,txt){
+  var el=document.getElementById("msgs");
+  var emp=el.querySelector(".emp"); if(emp)emp.remove();
+  var d=document.createElement("div"); d.className="msg "+(role==="user"?"u":"a");
+  var av=document.createElement("div"); av.className="av"; av.textContent=role==="user"?"M":"AI";
+  var bbl=document.createElement("div"); bbl.className="bbl"; bbl.textContent=txt;
+  d.appendChild(av); d.appendChild(bbl);
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+async function sendMsg(){
+  var inp=document.getElementById("cin"); var txt=inp.value.trim(); if(!txt)return;
+  inp.value=""; addMsg("user",txt); chatHist.push({role:"user",content:txt});
+  var btn=document.getElementById("sbtn"); btn.disabled=true; btn.textContent="...";
+  var sys="Expert strength coach. Full history: "+HISTORY+buildLogContext(activeCo||activeOv)+". Former D1 soccer player, recreational soccer/running. Bilateral Achilles tendinopathy and hip flexor strain. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight. Be specific and concise.";
+  var msgs=chatHist.length===1?[{role:"user",content:sys+"\n\nQuestion: "+txt}]:[{role:"user",content:sys}].concat(chatHist);
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:msgs})});
+    var rdata=await r.json();
+    var reply=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    addMsg("assistant",reply||"Something went wrong."); chatHist.push({role:"assistant",content:reply});
+  }catch(e){addMsg("assistant","Coach needs internet connection to respond.");}
+  btn.disabled=false; btn.textContent="Send";
+}
+buildMetrics();
+mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
+mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache[n]=null;loadRecs(n);});
+renderOv();
+renderChart();
+buildLogMeta();
+</script>
+</body>
+</html>
