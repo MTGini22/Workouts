@@ -775,6 +775,102 @@ function getChatContext(){
   }catch(e){return "";}
 }
 
+function startLogFromPlan(wo){
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
+  var plan=currentPlan[wo]||[];
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+  plan.forEach(function(rec){
+    var exName=rec.exercise;
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var hasWarmup=rec.target.toLowerCase().indexOf("warmup")>=0||rec.target.toLowerCase().indexOf("warm")>=0;
+    var targetSets=3; var targetReps=""; var targetWeight="";
+    var m=rec.target.match(/([0-9]+)x([0-9]+)[\s]*@?[\s]*([0-9\.]+)?/);
+    if(m){targetSets=parseInt(m[1])||3; targetReps=m[2]||""; targetWeight=m[3]||"";}
+    var thenMatch=rec.target.match(/then[\s]+([0-9]+)x([0-9]+)[\s]*@?[\s]*([0-9\.]+)?/i);
+    if(thenMatch){targetSets=parseInt(thenMatch[1])||targetSets; targetReps=thenMatch[2]||targetReps; targetWeight=thenMatch[3]||targetWeight;}
+    var progressWeights=[];
+    var progressMatch=rec.target.match(/([0-9]+(?:\/[0-9]+)+)lb/);
+    if(progressMatch){progressWeights=progressMatch[1].split("/"); targetSets=progressWeights.length;}
+    var totalSets=hasWarmup?targetSets+1:targetSets;
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var targetSpan=document.createElement("span"); targetSpan.className="ex-prev"; targetSpan.textContent=rec.target;
+    head.appendChild(nameSpan); head.appendChild(targetSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    for(var i=0;i<totalSets;i++){
+      var isWarmup=hasWarmup&&i===0;
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl";
+      lbl.textContent=isWarmup?"Warmup":"Set "+(hasWarmup?i:i+1);
+      row.appendChild(lbl);
+      if(isPU){
+        var gt=document.createElement("span"); gt.className="gtag";
+        gt.textContent=PU_GRIPS[i]||"Neutral"; row.appendChild(gt);
+      }
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.placeholder=targetReps?"reps ("+targetReps+")":"reps";
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        if(isWarmup&&targetWeight){
+          wInput.placeholder="lbs (~"+(Math.round(parseFloat(targetWeight)*0.6/5)*5)+")";
+        } else if(progressWeights.length){
+          var pwIdx=hasWarmup?i-1:i;
+          wInput.placeholder=progressWeights[pwIdx]?"lbs ("+progressWeights[pwIdx]+")":"lbs";
+        } else {
+          wInput.placeholder=targetWeight?"lbs ("+targetWeight+")":"lbs";
+        }
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    }
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
+}
+
+function q(txt){document.getElementById("cin").value=txt;sendMsg();}
+function addMsg(role,txt){
+  var el=document.getElementById("msgs");
+  var emp=el.querySelector(".emp"); if(emp)emp.remove();
+  var d=document.createElement("div"); d.className="msg "+(role==="user"?"u":"a");
+  var av=document.createElement("div"); av.className="av"; av.textContent=role==="user"?"M":"AI";
+  var bbl=document.createElement("div"); bbl.className="bbl"; bbl.textContent=txt;
+  d.appendChild(av); d.appendChild(bbl);
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+async function sendMsg(){
+  var inp=document.getElementById("cin"); var txt=inp.value.trim(); if(!txt)return;
+  inp.value=""; addMsg("user",txt); chatHist.push({role:"user",content:txt});
+  var btn=document.getElementById("sbtn"); btn.disabled=true; btn.textContent="...";
+  var sys="Expert strength coach. Full history: "+HISTORY+buildLogContext(activeCo||activeOv)+getChatContext()+". Former D1 soccer player, recreational soccer/running. Bilateral Achilles tendinopathy and hip flexor strain. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight. Be specific and concise.";
+  var msgs=chatHist.length===1?[{role:"user",content:sys+"\n\nQuestion: "+txt}]:[{role:"user",content:sys}].concat(chatHist);
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:msgs})});
+    var rdata=await r.json();
+    var reply=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    addMsg("assistant",reply||"Something went wrong.");
+    chatHist.push({role:"assistant",content:reply});
+    try{
+      var chatLog=JSON.parse(localStorage.getItem("chatlog")||"[]");
+      chatLog.push({date:new Date().toISOString().split("T")[0],q:txt.slice(0,200),a:reply.slice(0,300)});
+      if(chatLog.length>30)chatLog=chatLog.slice(chatLog.length-30);
+      localStorage.setItem("chatlog",JSON.stringify(chatLog));
+    }catch(e){}
+  }catch(e){addMsg("assistant","Coach needs internet connection.");}
+  btn.disabled=false; btn.textContent="Send";
+}
+
 buildMetrics();
 mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
