@@ -451,27 +451,34 @@ function startLog(wo){
     if(!lastDate||newest.date>lastDate) lastDate=newest.date;
   });
 
-  // Build the exercise list: use coach plan if available and recent, else use last logged session
+  // Build the exercise list: use coach plan if available, else exercises from most recent session date only
   var exerciseList=[];
   if(currentPlan[wo]&&currentPlan[wo].length){
-    // Use coach plan order
     exerciseList=currentPlan[wo].map(function(r){return r.exercise;});
   } else {
-    // Use exercises from last logged session in LAST, filtered to that date
+    // Find the most recent date across ALL sources
+    var allDates=[];
+    Object.keys(lastData).forEach(function(exName){
+      if(lastData[exName].date) allDates.push(lastData[exName].date);
+    });
+    Object.keys(storedWo).forEach(function(exName){
+      var ss=storedWo[exName]||[];
+      ss.forEach(function(s){if(s.date) allDates.push(s.date);});
+    });
+    allDates.sort();
+    var mostRecent=allDates.length?allDates[allDates.length-1]:"";
+    // Only include exercises that were done on that most recent date
     var exWithDates=[];
     Object.keys(lastData).forEach(function(exName){
-      if(lastData[exName].date===lastDate) exWithDates.push(exName);
+      if(lastData[exName].date===mostRecent) exWithDates.push(exName);
     });
-    // Also add any from storage with that date
     Object.keys(storedWo).forEach(function(exName){
-      var sessions=storedWo[exName]||[];
-      sessions.forEach(function(s){
-        if(s.date===lastDate&&exWithDates.indexOf(exName)<0) exWithDates.push(exName);
+      var ss=storedWo[exName]||[];
+      ss.forEach(function(s){
+        if(s.date===mostRecent&&exWithDates.indexOf(exName)<0) exWithDates.push(exName);
       });
     });
-    // If no date match, fall back to all exercises in LAST
-    if(!exWithDates.length) exWithDates=Object.keys(lastData);
-    exerciseList=exWithDates;
+    exerciseList=exWithDates.length?exWithDates:Object.keys(lastData);
   }
 
   // Update WOS for this workout to match
