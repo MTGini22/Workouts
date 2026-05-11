@@ -737,6 +737,44 @@ async function swapExercise(wo,idx,currentEx){
 }
 ;
 
+function appendWorkoutLog(entry){
+  try{
+    var log=JSON.parse(localStorage.getItem("wlog")||"[]");
+    log.push(entry);
+    if(log.length>50)log=log.slice(log.length-50);
+    localStorage.setItem("wlog",JSON.stringify(log));
+  }catch(e){}
+}
+function getWorkoutLog(){
+  try{return JSON.parse(localStorage.getItem("wlog")||"[]");}catch(e){return [];}
+}
+function buildLogContext(wo){
+  var log=getWorkoutLog().filter(function(e){return e.workout===wo;});
+  if(!log.length)return "";
+  var lines=["","COMPLETED SESSION LOG (most recent first):"];
+  log.slice().reverse().slice(0,10).forEach(function(entry){
+    lines.push(entry.date+":");
+    entry.exercises.forEach(function(ex){
+      var line="  "+ex.name+": did "+ex.actual;
+      if(ex.target)line+=" (target was "+ex.target+")";
+      lines.push(line);
+    });
+  });
+  return lines.join("\n");
+}
+function getChatContext(){
+  try{
+    var chatLog=JSON.parse(localStorage.getItem("chatlog")||"[]");
+    if(!chatLog.length)return "";
+    var lines=["","ATHLETE NOTES FROM COACH CHAT:"];
+    chatLog.slice(-8).forEach(function(entry){
+      lines.push(entry.date+" Q: "+entry.q);
+      lines.push("  A: "+entry.a);
+    });
+    return lines.join("\n");
+  }catch(e){return "";}
+}
+
 buildMetrics();
 mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
