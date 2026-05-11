@@ -34,7 +34,8 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .up{color:#16a34a}.fl{color:#bbb}.dn{color:#dc2626}
 .cwrap{background:#fff;border-radius:12px;border:1px solid #e8e8e6;padding:12px;margin-bottom:12px}
 .cleg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
-.cli{display:flex;align-items:center;gap:4px;font-size:11px;color:#666}
+.cli{display:flex;align-items:center;gap:4px;font-size:11px;color:#666;cursor:pointer;padding:2px 4px;border-radius:4px}
+.cli:hover{background:#f0f0ee}
 .csw{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .workout-btn{display:block;width:100%;padding:13px;background:#fff;border:1px solid #e8e8e6;border-radius:12px;margin-bottom:9px;text-align:left;cursor:pointer}
 .workout-btn:hover{border-color:#bbb}
@@ -50,25 +51,23 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .gtag{font-size:10px;color:#777;background:#f0f0ee;border-radius:4px;padding:2px 5px;flex-shrink:0}
 .sin{flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:16px;font-family:inherit;outline:none;min-width:0}
 .sin:focus{border-color:#888}
-.datein{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:9px;font-size:14px;font-family:inherit;outline:none;margin-bottom:11px}
-.savebtn{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
+.savebtn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
 .backbtn{background:none;border:none;color:#666;font-size:13px;cursor:pointer;padding:0;margin-bottom:13px;display:block}
 .okmsg{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 13px;color:#166534;font-size:12px;margin-bottom:11px;display:none}
 .clbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:8px}
-.reccard{background:#fff;border:1px solid #e8e8e6;border-radius:11px;overflow:hidden;margin-bottom:7px}
-.rechead{padding:9px 13px;border-bottom:1px solid #f0f0ee;display:flex;align-items:center;justify-content:space-between}
-.recname{font-weight:600;font-size:13px}
-.recbadge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
-.bup{background:#f0fdf4;color:#166534}.bhold{background:#fefce8;color:#854d0e}.btech{background:#eff6ff;color:#1d4ed8}.bnew{background:#fdf4ff;color:#7e22ce}.bswap{background:#fff7ed;color:#c2410c}
 .mode-bar{display:flex;gap:5px;margin-bottom:12px}
 .mode-btn{flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:11px;font-weight:500;color:#666;cursor:pointer;text-align:center}
 .mode-btn.mode-on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .looks-good-btn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:12px;font-family:inherit}
-.looks-good-btn:hover{background:#15803d}
 .rec-actions{display:flex;gap:8px;margin-top:10px}
 .rec-act-btn{flex:1;padding:6px;border:1px solid #e8e8e6;border-radius:7px;background:#f4f4f2;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
-.rec-act-btn:hover{background:#ebebea;color:#1a1a1a}
-.tut-area{font-size:12px;color:#555;line-height:1.55;margin-top:8px;padding:8px 10px;background:#f9f9f7;border-radius:7px;border-left:3px solid #2563eb}
+.rec-act-btn:hover{background:#ebebea}
+.tut-area{font-size:12px;color:#555;line-height:1.55;margin-top:8px;padding:8px 10px;background:#f9f9f7;border-radius:7px;border-left:3px solid #2563eb;display:none}
+.reccard{background:#fff;border:1px solid #e8e8e6;border-radius:11px;overflow:hidden;margin-bottom:7px}
+.rechead{padding:9px 13px;border-bottom:1px solid #f0f0ee;display:flex;align-items:center;justify-content:space-between}
+.recname{font-weight:600;font-size:13px}
+.recbadge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.bup{background:#f0fdf4;color:#166634}.bhold{background:#fefce8;color:#854d0e}.btech{background:#eff6ff;color:#1d4ed8}.bnew{background:#fdf4ff;color:#7e22ce}.bswap{background:#fff7ed;color:#c2410c}
 .recbody{padding:9px 13px}
 .rectgt{font-size:13px;font-weight:500;margin-bottom:3px}
 .recreason{font-size:11px;color:#888;line-height:1.45}
@@ -90,13 +89,10 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .emp{text-align:center;padding:24px;color:#ccc;font-size:13px}
 .ldrec{padding:18px;color:#999;font-size:13px;text-align:center}
 .chart-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:8px}
-.leg-item{transition:opacity .15s;padding:2px 4px;border-radius:4px}
-.leg-item:hover{background:#f0f0ee}
-.leg-off .csw{opacity:0.3}
+#cal-grid div:hover{opacity:0.8}
 </style>
 </head>
 <body>
-
 <div class="app">
   <h1>Workout tracker</h1>
   <p class="sub">Aug 2025 &ndash; present &nbsp;&middot;&nbsp; Push / Legs / Back</p>
@@ -126,8 +122,8 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
       <p class="chart-lbl">Est. 1-rep max (lb)</p>
       <div style="position:relative;height:200px"><canvas id="pr-chart-e1rm"></canvas></div>
     </div>
-    <div class="cwrap" style="margin-top:16px">
-      <p class="chart-lbl">Bodyweight exercises — total reps per session</p>
+    <div class="cwrap" style="margin-top:4px">
+      <p class="chart-lbl">Bodyweight exercises &mdash; total reps per session</p>
       <div class="cleg" id="bw-leg" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
       <div style="position:relative;height:200px"><canvas id="bw-chart"></canvas></div>
     </div>
@@ -142,9 +138,22 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
     <div id="log-form" class="logform">
       <button class="backbtn" onclick="backToHome()">&larr; Back</button>
       <div class="okmsg" id="okmsg"></div>
-      <input type="date" class="datein" id="log-date">
+      <div id="cal-wrap" style="margin-bottom:11px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <button onclick="calNav(-1)" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:#555">&lsaquo;</button>
+          <span id="cal-title" style="font-size:13px;font-weight:600;color:#1a1a1a"></span>
+          <button onclick="calNav(1)" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:#555">&rsaquo;</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#2563eb"></div>Push</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>Legs</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#9333ea"></div>Back</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center"></div>
+        <input type="hidden" id="log-date">
+      </div>
       <div id="log-exs"></div>
-      <button class="savebtn" onclick="saveSession()" style="background:#16a34a">Complete workout</button>
+      <button class="savebtn" onclick="saveSession()">Complete workout</button>
     </div>
   </div>
   <div id="tc-co" class="tc">
@@ -425,7 +434,7 @@ function startLog(wo){
   document.getElementById("log-home").style.display="none";
   document.getElementById("log-form").classList.add("show");
   document.getElementById("okmsg").style.display="none";
-  document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
+  initCal();
   var stored=loadS();
   var c=document.getElementById("log-exs"); c.innerHTML="";
 
@@ -857,7 +866,7 @@ function startLogFromPlan(wo){
   document.getElementById("log-home").style.display="none";
   document.getElementById("log-form").classList.add("show");
   document.getElementById("okmsg").style.display="none";
-  document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
+  initCal();
   var plan=currentPlan[wo]||[];
   var c=document.getElementById("log-exs"); c.innerHTML="";
   plan.forEach(function(rec){
@@ -946,6 +955,93 @@ async function sendMsg(){
     }catch(e){}
   }catch(e){addMsg("assistant","Coach needs internet connection.");}
   btn.disabled=false; btn.textContent="Send";
+}
+
+var calYear=0, calMonth=0, calSelected="";
+var WO_COLORS={"Push":"#2563eb","Legs":"#16a34a","Back":"#9333ea"};
+
+function getWorkoutDates(){
+  // Build map of date -> workout type from LAST and storage
+  var map={};
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wo){
+    // From LAST
+    var lastWo=LAST[wo]||{};
+    Object.keys(lastWo).forEach(function(ex){
+      var d=lastWo[ex].date;
+      if(d) map[d]=wo;
+    });
+    // From storage
+    var storedWo=stored[wo]||{};
+    Object.keys(storedWo).forEach(function(ex){
+      var ss=storedWo[ex]||[];
+      ss.forEach(function(s){if(s.date) map[s.date]=wo;});
+    });
+  });
+  return map;
+}
+
+function initCal(){
+  var today=new Date();
+  calYear=today.getFullYear();
+  calMonth=today.getMonth();
+  calSelected=today.toISOString().split("T")[0];
+  document.getElementById("log-date").value=calSelected;
+  renderCal();
+}
+
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCal();
+}
+
+function renderCal(){
+  var woDates=getWorkoutDates();
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  document.getElementById("cal-title").textContent=months[calMonth]+" "+calYear;
+  var grid=document.getElementById("cal-grid");
+  grid.innerHTML="";
+  // Day headers
+  ["S","M","T","W","T","F","S"].forEach(function(d){
+    var h=document.createElement("div");
+    h.textContent=d;
+    h.style.cssText="font-size:10px;color:#999;padding:2px 0;font-weight:600";
+    grid.appendChild(h);
+  });
+  var firstDay=new Date(calYear,calMonth,1).getDay();
+  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  var today=new Date().toISOString().split("T")[0];
+  // Empty cells
+  for(var i=0;i<firstDay;i++){
+    var empty=document.createElement("div"); grid.appendChild(empty);
+  }
+  // Day cells
+  for(var d=1;d<=daysInMonth;d++){
+    var dateStr=calYear+"-"+String(calMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    var cell=document.createElement("div");
+    var woType=woDates[dateStr];
+    var isSelected=dateStr===calSelected;
+    var isToday=dateStr===today;
+    cell.textContent=d;
+    var bg="transparent";
+    var color="#1a1a1a";
+    var border="none";
+    var fontWeight="400";
+    if(isSelected){bg="#1a1a1a";color="#fff";}
+    else if(woType){bg=WO_COLORS[woType];color="#fff";fontWeight="600";}
+    else if(isToday){border="1px solid #1a1a1a";}
+    cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fontWeight+";";
+    (function(ds){
+      cell.onclick=function(){
+        calSelected=ds;
+        document.getElementById("log-date").value=ds;
+        renderCal();
+      };
+    })(dateStr);
+    grid.appendChild(cell);
+  }
 }
 
 buildMetrics();
