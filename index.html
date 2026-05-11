@@ -428,41 +428,94 @@ function startLog(wo){
   document.getElementById("log-date").value=new Date().toISOString().split("T")[0];
   var stored=loadS();
   var c=document.getElementById("log-exs"); c.innerHTML="";
-  WOS[wo].forEach(function(exName){
-    var base=LAST[wo]?LAST[wo][exName]:null; var last=base;
-    var sl=(stored[wo]||{})[exName];
-    if(sl&&sl.length){sl.sort(function(a,b){return b.date.localeCompare(a.date);});if(!last||sl[0].date>last.date)last=sl[0];}
-    var isPU=exName==="Pull-Ups"; var isBW=BW.indexOf(exName)>=0;
-    var ls=last?last.sets:[]; var n=Math.max(ls.length,isPU?4:3);
-    // Build block using DOM
+
+  // Build exercise list from last session — always use most recent logged exercises
+  // Merge stored sessions with LAST to get the freshest data
+  var lastSession={};
+  var lastDate="";
+
+  // Get all exercises from LAST for this workout
+  var lastData=LAST[wo]||{};
+  Object.keys(lastData).forEach(function(exName){
+    var d=lastData[exName].date||"";
+    if(!lastDate||d>lastDate) lastDate=d;
+  });
+
+  // Override with anything newer from storage
+  var storedWo=stored[wo]||{};
+  Object.keys(storedWo).forEach(function(exName){
+    var sessions=storedWo[exName]||[];
+    if(!sessions.length) return;
+    sessions.sort(function(a,b){return b.date.localeCompare(a.date);});
+    var newest=sessions[0];
+    if(!lastDate||newest.date>lastDate) lastDate=newest.date;
+  });
+
+  // Build the exercise list: use coach plan if available and recent, else use last logged session
+  var exerciseList=[];
+  if(currentPlan[wo]&&currentPlan[wo].length){
+    // Use coach plan order
+    exerciseList=currentPlan[wo].map(function(r){return r.exercise;});
+  } else {
+    // Use exercises from last logged session in LAST, filtered to that date
+    var exWithDates=[];
+    Object.keys(lastData).forEach(function(exName){
+      if(lastData[exName].date===lastDate) exWithDates.push(exName);
+    });
+    // Also add any from storage with that date
+    Object.keys(storedWo).forEach(function(exName){
+      var sessions=storedWo[exName]||[];
+      sessions.forEach(function(s){
+        if(s.date===lastDate&&exWithDates.indexOf(exName)<0) exWithDates.push(exName);
+      });
+    });
+    // If no date match, fall back to all exercises in LAST
+    if(!exWithDates.length) exWithDates=Object.keys(lastData);
+    exerciseList=exWithDates;
+  }
+
+  // Update WOS for this workout to match
+  if(exerciseList.length) WOS[wo]=exerciseList;
+
+  exerciseList.forEach(function(exName){
+    var base=lastData[exName];
+    var last=base;
+    var sl=storedWo[exName];
+    if(sl&&sl.length){
+      sl.sort(function(a,b){return b.date.localeCompare(a.date);});
+      if(!last||sl[0].date>last.date) last=sl[0];
+    }
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var ls=last?last.sets:[];
+    var n=Math.max(ls.length,isPU?4:3);
+    var prev=last?fmtS(last.sets):"";
     var block=document.createElement("div"); block.className="ex-block";
     var head=document.createElement("div"); head.className="ex-head";
     var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
     var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
-    prevSpan.textContent=last?"Last: "+fmtS(last.sets):"No data";
+    prevSpan.textContent=prev?"Last: "+prev:"No data";
     head.appendChild(nameSpan); head.appendChild(prevSpan);
     var setrows=document.createElement("div"); setrows.className="setrows";
     for(var i=0;i<n;i++){
       var ps=ls[i]||null;
       var rph=ps&&ps.reps?Math.round(ps.reps):"";
       var wph=ps&&ps.weight&&ps.weight>5?Math.round(ps.weight):"";
+      var grip=isPU?PU_GRIPS[i]:"";
+      var gt=grip?"<span class=\"gtag\">"+grip+"</span>":"";
       var row=document.createElement("div"); row.className="setrow";
       var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
       row.appendChild(lbl);
-      if(isPU){
-        var gt=document.createElement("span"); gt.className="gtag"; gt.textContent=PU_GRIPS[i];
-        row.appendChild(gt);
-      }
+      if(isPU){var gtEl=document.createElement("span");gtEl.className="gtag";gtEl.textContent=PU_GRIPS[i]||"Neutral";row.appendChild(gtEl);}
       var rInput=document.createElement("input");
       rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
-      rInput.placeholder="reps"+(rph?" ("+rph+")":"");
+      rInput.placeholder=rph?"reps ("+rph+")":"reps";
       rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
       row.appendChild(rInput);
-      if(!isBW&&!isPU){
+      if(!isBW){
         rInput.style.maxWidth="100px";
         var wInput=document.createElement("input");
         wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
-        wInput.placeholder="lbs"+(wph?" ("+wph+")":"");
+        wInput.placeholder=wph?"lbs ("+wph+")":"lbs";
         wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
         row.appendChild(wInput);
       }
@@ -472,6 +525,7 @@ function startLog(wo){
     c.appendChild(block);
   });
 }
+
 function backToHome(){
   logWo=null;
   document.getElementById("log-home").style.display="block";
