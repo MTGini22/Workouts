@@ -736,6 +736,14 @@ async function swapExercise(wo,idx,currentEx){
   }catch(e){tgt.textContent="Swap failed — try again."; rsn.textContent="";}
 }
 ;
+
+buildMetrics();
+mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
+mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache[n]=null;loadRecs(n);});
+renderOv();
+renderChart();
+buildLogMeta();
 </script>
 </body>
 </html>
