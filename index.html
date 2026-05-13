@@ -626,7 +626,20 @@ async function loadRecs(wo,force){
     var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
     var rdata=await resp.json();
     var txt=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
-    var recs=JSON.parse(txt); recsCache[wo]=recs; renderRecs(wo,recs);
+    var recs=JSON.parse(txt);
+    // Validate exercise count - retry once if wrong
+    var expectedAccessories=workoutMode==="mini"?4:6;
+    var anchorCount=wo==="Back"?2:1; // Back has Deadlift + Pull-Ups as anchors
+    var expectedTotal=anchorCount+expectedAccessories;
+    if(recs.length<expectedTotal){
+      // Try to get missing exercises by asking again with stricter count
+      var retryPrompt="Your previous response had "+recs.length+" exercises but needed exactly "+expectedTotal+". The current plan: "+recs.map(function(r){return r.exercise;}).join(", ")+". Add the missing "+(expectedTotal-recs.length)+" exercise(s) to complete the "+wo+" "+workoutMode+" workout. Each pair needs exactly 2 exercises. Return the COMPLETE updated JSON array with all "+expectedTotal+" exercises.";
+      var retryResp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1500,messages:[{role:"user",content:prompt},{role:"assistant",content:txt},{role:"user",content:retryPrompt}]})});
+      var retryData=await retryResp.json();
+      var retryTxt=(retryData.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+      try{recs=JSON.parse(retryTxt);}catch(e){}
+    }
+    recsCache[wo]=recs; renderRecs(wo,recs);
   }catch(e){
     var errDiv=document.createElement("div"); errDiv.className="ldrec";
     errDiv.textContent="Coach needs internet. ";
