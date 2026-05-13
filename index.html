@@ -682,7 +682,11 @@ function renderRecs(wo,recs){
     var btn=document.createElement("button");
     btn.className="mode-btn"+(workoutMode===m[0]?" mode-on":"");
     btn.textContent=m[1];
-    (function(mode){btn.onclick=function(){workoutMode=mode;recsCache[wo]=null;loadRecs(wo,true);};})(m[0]);
+    (function(mode){btn.onclick=function(){
+      workoutMode=mode;
+      recsCache={}; // clear ALL cached recs when mode changes
+      loadRecs(wo,true);
+    };})(m[0]);
     modeBar.appendChild(btn);
   });
   el.appendChild(modeBar);
@@ -1063,7 +1067,7 @@ function renderCal(){
 buildMetrics();
 mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
-mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache[n]=null;loadRecs(n);});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache={};loadRecs(n);});
 renderOv();
 renderChart();
 buildLogMeta();
