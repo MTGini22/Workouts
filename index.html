@@ -652,16 +652,18 @@ async function loadRecs(wo,force){
   }
 }
 function validateRecs(wo, recs){
-  var PUSH_ONLY=["face pull","rear delt","row","pull-up","pullup","chin-up","chinup","lat pulldown","bicep","curl","deadlift","shrug","reverse fly"];
-  var BACK_ONLY=["lateral raise","chest fly","pec dec","tricep","bench press","overhead press","incline","decline","dips","push-up","pushup"];
+  // Only block clearly wrong-category exercises
+  var PUSH_BLOCKED=["face pull","rear delt"," row","pull-up","pullup","chin-up","chinup","lat pulldown","bicep curl","deadlift","barbell shrug","reverse fly"];
+  var BACK_BLOCKED=["lateral raise","chest fly","pec dec","bench press","overhead press","incline press","decline press","push-up","pushup"];
   var filtered=[];
   recs.forEach(function(rec){
     var name=rec.exercise.toLowerCase();
     var bad=false;
-    if(wo==="Push") PUSH_ONLY.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
-    if(wo==="Back") BACK_ONLY.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
-    // Never allow bicep curls in any workout
-    if(name.indexOf("curl")>=0&&name.indexOf("hair")< 0) bad=true;
+    if(wo==="Push") PUSH_BLOCKED.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
+    if(wo==="Back") BACK_BLOCKED.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
+    // Block ONLY bicep curls (not hamstring curl, not cable curl for back etc)
+    var isBicepCurl=(name.indexOf("bicep")>=0&&name.indexOf("curl")>=0)||(name==="curl")||(name.indexOf("preacher curl")>=0)||(name.indexOf("hammer curl")>=0);
+    if(isBicepCurl) bad=true;
     if(!bad) filtered.push(rec);
     else console.warn("Filtered bad exercise for "+wo+": "+rec.exercise);
   });
