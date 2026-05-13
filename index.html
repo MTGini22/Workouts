@@ -1133,22 +1133,24 @@ function renderCal(){
 
 // On startup, load from cloud and merge with local storage
 (async function initFromStorage(){
-  // Load cloud data and merge with local
+  // Load local data first - this is always the source of truth
   var localData=loadS();
-  var cloudData=await cloudLoad();
-  var merged=mergeData(localData, cloudData);
-  // If cloud has newer data, update local storage
-  if(cloudData){
-    _mem=merged;
-    try{localStorage.setItem("wt3",JSON.stringify(merged));}catch(e){}
-  }
-  var stored=merged;
-  // Show a subtle sync indicator
-  var syncEl=document.createElement("div");
-  syncEl.style.cssText="position:fixed;bottom:8px;right:8px;font-size:10px;color:#bbb;z-index:999";
-  syncEl.textContent="✓ synced";
-  document.body.appendChild(syncEl);
-  setTimeout(function(){syncEl.remove();},2000);
+  // Try to load and merge cloud data - failure is safe, local data is preserved
+  try{
+    var cloudData=await cloudLoad();
+    if(cloudData){
+      var merged=mergeData(localData, cloudData);
+      _mem=merged;
+      try{localStorage.setItem("wt3",JSON.stringify(merged));}catch(e){}
+      // Upload merged back to cloud so cloud stays current
+      cloudSave(merged);
+      var syncEl=document.createElement("div");
+      syncEl.style.cssText="position:fixed;bottom:8px;right:8px;font-size:10px;color:#bbb;z-index:999";
+      syncEl.textContent="✓ synced";
+      document.body.appendChild(syncEl);
+      setTimeout(function(){syncEl.remove();},2000);
+    }
+  }catch(e){console.warn("Cloud sync skipped",e);}
 
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wo){
