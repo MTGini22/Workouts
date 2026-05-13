@@ -626,7 +626,9 @@ async function loadRecs(wo,force){
     var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
     var rdata=await resp.json();
     var txt=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+    console.log("RAW API response:", txt);
     var recs=JSON.parse(txt);
+    console.log("Parsed exercises:", recs.map(function(r){return r.exercise;}));
     // Validate exercise count - retry once if wrong
     var expectedAccessories=workoutMode==="mini"?4:6;
     var anchorCount=wo==="Back"?2:1; // Back has Deadlift + Pull-Ups as anchors
@@ -665,7 +667,7 @@ function validateRecs(wo, recs){
     var isBicepCurl=(name.indexOf("bicep")>=0&&name.indexOf("curl")>=0)||(name==="curl")||(name.indexOf("preacher curl")>=0)||(name.indexOf("hammer curl")>=0);
     if(isBicepCurl) bad=true;
     if(!bad) filtered.push(rec);
-    else console.warn("Filtered bad exercise for "+wo+": "+rec.exercise);
+    else console.warn("FILTERED OUT: "+rec.exercise+" from "+wo+" workout");
   });
   return filtered;
 }
