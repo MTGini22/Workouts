@@ -199,34 +199,9 @@ var WOS={
   Back:["Barbell Deadlift","Pull-Ups","Face Pulls","Single Arm Dumbbell Row","Cable Lat Pulldown","Barbell Shrugs","Dumbbell Reverse Fly"]
 };
 var _mem={};
-function getApiKey(){var k=["sk-ant-api03-NsN9jT4","AdWF74d7MlCAbxeEXNQu","H0jdb68z_v-cK5ywOOFr24k-PGUUYtDIC249jacHp6BkACVTkl3jLZL5MWA-XVgF7QAA"].join("");return k;}
-function saveApiKey(k){localStorage.setItem("ak",k);}
-
-var SUPA_URL="https://phlcdbixqdxrsercmqmx.supabase.co";
-var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBobGNkYml4cWR4cnNlcmNtcW14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MDA4MTgsImV4cCI6MjA5NDI3NjgxOH0.Kk1P9cFJyEh_0F09DpuHtgeFWYVR48HR3NwTnfQAUoU";
-var SUPA_USER="mattmangini_workouts"; // fixed user ID - single user app
-
-// Sync disabled
-async function cloudSave(data){return false;}
-async function cloudLoad(){return null;}
-
-function mergeData(local, cloud){
-  if(!cloud) return local;
-  var merged=JSON.parse(JSON.stringify(local));
-  ["Push","Legs","Back"].forEach(function(wo){
-    var cWo=cloud[wo]||{};
-    if(!merged[wo])merged[wo]={};
-    Object.keys(cWo).forEach(function(ex){
-      var cSessions=cWo[ex]||[];
-      var lSessions=merged[wo][ex]||[];
-      // Merge sessions by date - keep all unique dates, prefer cloud if conflict
-      var byDate={};
-      lSessions.forEach(function(s){byDate[s.date]=s;});
-      cSessions.forEach(function(s){byDate[s.date]=s;}); // cloud overwrites local
-      merged[wo][ex]=Object.values(byDate).sort(function(a,b){return a.date.localeCompare(b.date);});
-    });
-  });
-  return merged;
+function getApiKey(){
+  var k=["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");
+  return k;
 }
 
 var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
@@ -1094,6 +1069,7 @@ async function sendMsg(){
   var inp=document.getElementById("cin"); var txt=inp.value.trim(); if(!txt)return;
   inp.value=""; addMsg("user",txt); chatHist.push({role:"user",content:txt});
   var btn=document.getElementById("sbtn"); btn.disabled=true; btn.textContent="...";
+  var HISTORY="Push/Legs/Back split. Aug 2025-present. D1 soccer athlete, Achilles tendinopathy, hip flexor strain.";
   var sys="Expert strength coach. Full history: "+HISTORY+buildLogContext(activeCo||activeOv)+getChatContext()+". Former D1 soccer player, recreational soccer/running. Bilateral Achilles tendinopathy and hip flexor strain. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight. Be specific and concise.";
   var msgs=chatHist.length===1?[{role:"user",content:sys+"\n\nQuestion: "+txt}]:[{role:"user",content:sys}].concat(chatHist);
   try{
