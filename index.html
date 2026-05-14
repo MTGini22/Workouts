@@ -319,14 +319,8 @@ function buildMetrics(){
   });
 }
 function renderOv(){
-  var lastAll=getLastForWorkout(activeOv);
+  var last=getLastForWorkout(activeOv);
   var chart=CHART[activeOv]||{};
-  // Find most recent date and only show exercises from that date
-  var allDates=Object.values(lastAll).map(function(s){return s.date||"";}).filter(Boolean).sort();
-  var mostRecent=allDates.length?allDates[allDates.length-1]:"";
-  var last={};
-  Object.keys(lastAll).forEach(function(n){if(lastAll[n].date===mostRecent)last[n]=lastAll[n];});
-  if(!Object.keys(last).length)last=lastAll;
   var list=document.createElement("div"); list.className="exlist";
   Object.keys(last).forEach(function(name){
     var sess=last[name]; var pts=chart[name]||[];
@@ -432,6 +426,69 @@ function renderChart(){
   });
   // BW chart — always shown regardless of workout filter
   renderBWChart();
+}
+function loadLogForDate(date, wo){
+  // Show the exercises logged on a specific past date
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  document.getElementById("log-date").value=date;
+  var stored=loadS();
+  var storedWo=stored[wo]||{};
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+  // Find all exercises that had sessions on this date
+  var exsOnDate=[];
+  Object.keys(storedWo).forEach(function(exName){
+    var ss=storedWo[exName]||[];
+    var match=ss.filter(function(s){return s.date===date;});
+    if(match.length) exsOnDate.push({name:exName, session:match[0]});
+  });
+  // Also check LAST
+  var lastWo=LAST[wo]||{};
+  Object.keys(lastWo).forEach(function(exName){
+    if(lastWo[exName].date===date&&!exsOnDate.find(function(e){return e.name===exName;})){
+      exsOnDate.push({name:exName, session:lastWo[exName]});
+    }
+  });
+  if(!exsOnDate.length){
+    // No stored data - fall back to showing template with last known sets
+    startLog(wo); return;
+  }
+  exsOnDate.forEach(function(ex){
+    var exName=ex.name; var sess=ex.session;
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var sets=sess.sets||[];
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
+    prevSpan.textContent=fmtS(sets);
+    head.appendChild(nameSpan); head.appendChild(prevSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    sets.forEach(function(s,i){
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
+      row.appendChild(lbl);
+      if(isPU){var gt=document.createElement("span");gt.className="gtag";gt.textContent=s.grip||PU_GRIPS[i]||"";row.appendChild(gt);}
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.value=s.reps||"";
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        wInput.value=s.weight||"";
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    });
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
 }
 function renderBWChart(){
   // Merge any stored BW sessions
@@ -1048,21 +1105,23 @@ var calYear=0, calMonth=0, calSelected="";
 var WO_COLORS={"Push":"#2563eb","Legs":"#16a34a","Back":"#9333ea"};
 
 function getWorkoutDates(){
-  // Build map of date -> workout type from LAST and storage
   var map={};
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wo){
+    // From baked-in chart data (full history)
+    var chartWo=CHART_WEIGHT[wo]||{};
+    Object.keys(chartWo).forEach(function(ex){
+      (chartWo[ex]||[]).forEach(function(p){if(p.d)map[p.d]=wo;});
+    });
     // From LAST
     var lastWo=LAST[wo]||{};
     Object.keys(lastWo).forEach(function(ex){
-      var d=lastWo[ex].date;
-      if(d) map[d]=wo;
+      if(lastWo[ex].date) map[lastWo[ex].date]=wo;
     });
     // From storage
     var storedWo=stored[wo]||{};
     Object.keys(storedWo).forEach(function(ex){
-      var ss=storedWo[ex]||[];
-      ss.forEach(function(s){if(s.date) map[s.date]=wo;});
+      (storedWo[ex]||[]).forEach(function(s){if(s.date)map[s.date]=wo;});
     });
   });
   return map;
@@ -1075,6 +1134,11 @@ function initCal(){
   calSelected=today.toISOString().split("T")[0];
   document.getElementById("log-date").value=calSelected;
   renderCal();
+}
+function getEarliestWorkoutDate(){
+  var woDates=getWorkoutDates();
+  var dates=Object.keys(woDates).sort();
+  return dates.length?dates[0]:null;
 }
 
 function calNav(dir){
@@ -1120,13 +1184,17 @@ function renderCal(){
     else if(woType){bg=WO_COLORS[woType];color="#fff";fontWeight="600";}
     else if(isToday){border="1px solid #1a1a1a";}
     cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fontWeight+";";
-    (function(ds){
+    (function(ds, wo){
       cell.onclick=function(){
         calSelected=ds;
         document.getElementById("log-date").value=ds;
         renderCal();
+        // If this date had a workout, load that workout's log
+        if(wo){
+          loadLogForDate(ds, wo);
+        }
       };
-    })(dateStr);
+    })(dateStr, woType);
     grid.appendChild(cell);
   }
 }
