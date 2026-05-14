@@ -428,7 +428,6 @@ function renderChart(){
   renderBWChart();
 }
 function loadLogForDate(date, wo){
-  // Show the exercises logged on a specific past date
   logWo=wo;
   document.getElementById("log-home").style.display="none";
   document.getElementById("log-form").classList.add("show");
@@ -437,24 +436,44 @@ function loadLogForDate(date, wo){
   var stored=loadS();
   var storedWo=stored[wo]||{};
   var c=document.getElementById("log-exs"); c.innerHTML="";
-  // Find all exercises that had sessions on this date
   var exsOnDate=[];
+  // 1. Check localStorage first
   Object.keys(storedWo).forEach(function(exName){
     var ss=storedWo[exName]||[];
     var match=ss.filter(function(s){return s.date===date;});
     if(match.length) exsOnDate.push({name:exName, session:match[0]});
   });
-  // Also check LAST
+  // 2. Check LAST
   var lastWo=LAST[wo]||{};
   Object.keys(lastWo).forEach(function(exName){
     if(lastWo[exName].date===date&&!exsOnDate.find(function(e){return e.name===exName;})){
       exsOnDate.push({name:exName, session:lastWo[exName]});
     }
   });
-  if(!exsOnDate.length){
-    // No stored data - fall back to showing template with last known sets
-    startLog(wo); return;
+  // 3. For historical dates - reconstruct from raw blocks data
+  // Each exercise in CHART_WEIGHT has data points with dates
+  // We find all exercises that have a data point on this exact date
+  // and show them with placeholder sets based on the weight
+  if(exsOnDate.length===0){
+    var chartWo=CHART_WEIGHT[wo]||{};
+    Object.keys(chartWo).forEach(function(exName){
+      var pts=chartWo[exName]||[];
+      var pt=pts.find(function(p){return p.d===date;});
+      if(pt){
+        // Reconstruct a plausible session from top weight
+        var sets=[];
+        var isPU=exName==="Pull-Ups";
+        var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+        // Use 3-4 sets as default for historical
+        var nSets=isPU?4:3;
+        for(var i=0;i<nSets;i++){
+          sets.push(isBW?{reps:null,weight:null}:{reps:null,weight:pt.w});
+        }
+        exsOnDate.push({name:exName,session:{date:date,sets:sets},historical:true});
+      }
+    });
   }
+  if(!exsOnDate.length){startLog(wo);return;}
   exsOnDate.forEach(function(ex){
     var exName=ex.name; var sess=ex.session;
     var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
