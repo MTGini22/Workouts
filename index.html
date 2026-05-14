@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v9</title>
+<title>Workout Tracker v10</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -203,7 +203,6 @@ function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTT
 
 
 var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
-var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
 function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
