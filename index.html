@@ -247,6 +247,7 @@ function mergeData(local, cloud){
   return merged;
 }
 
+var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
 var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
@@ -474,6 +475,15 @@ function loadLogForDate(date, wo){
     });
   }
   if(!exsOnDate.length){startLog(wo);return;}
+  // Sort in canonical workout order
+  var order=EX_ORDER[wo]||[];
+  exsOnDate.sort(function(a,b){
+    var ai=order.indexOf(a.name); var bi=order.indexOf(b.name);
+    if(ai===-1&&bi===-1) return 0;
+    if(ai===-1) return 1;
+    if(bi===-1) return -1;
+    return ai-bi;
+  });
   exsOnDate.forEach(function(ex){
     var exName=ex.name; var sess=ex.session;
     var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
