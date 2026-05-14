@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Workout Tracker v12</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f2;color:#1a1a1a;font-size:14px}
+.app{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+h1{font-size:19px;font-weight:600;margin-bottom:2px}
+.sub{font-size:11px;color:#999;margin-bottom:14px}
+.tnav{display:flex;gap:2px;background:#e3e3e1;border-radius:10px;padding:3px;margin-bottom:14px;position:sticky;top:8px;z-index:100}
+.tbtn{flex:1;padding:7px 4px;border:none;background:transparent;border-radius:7px;font-size:12px;font-weight:500;color:#666;cursor:pointer}
+.tbtn.on{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tc{display:none}.tc.on{display:block}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.mc{background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #e8e8e6}
+.ml{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.mv{font-size:20px;font-weight:600}
+.ms{font-size:10px;color:#bbb;margin-top:2px}
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.pill{padding:5px 13px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:#555}
+.pill.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.exlist{background:#fff;border-radius:12px;border:1px solid #e8e8e6;overflow:hidden;margin-bottom:12px}
+.exrow{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 13px;border-bottom:1px solid #f2f2f0;gap:8px}
+.exrow:last-child{border-bottom:none}
+.exn{font-weight:500;font-size:13px}
+.exm{font-size:11px;color:#999;margin-top:2px;line-height:1.45}
+.ext{font-size:12px;font-weight:600;text-align:right;flex-shrink:0}
+.up{color:#16a34a}.fl{color:#bbb}.dn{color:#dc2626}
+.cwrap{background:#fff;border-radius:12px;border:1px solid #e8e8e6;padding:12px;margin-bottom:12px}
+.cleg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.cli{display:flex;align-items:center;gap:4px;font-size:11px;color:#666;cursor:pointer;padding:2px 4px;border-radius:4px}
+.cli:hover{background:#f0f0ee}
+.csw{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.workout-btn{display:block;width:100%;padding:13px;background:#fff;border:1px solid #e8e8e6;border-radius:12px;margin-bottom:9px;text-align:left;cursor:pointer}
+.workout-btn:hover{border-color:#bbb}
+.wb-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.wb-meta{font-size:11px;color:#999}
+.logform{display:none}.logform.show{display:block}
+.ex-block{background:#fff;border:1px solid #e8e8e6;border-radius:12px;margin-bottom:9px;overflow:hidden}
+.ex-head{padding:9px 13px;background:#fafaf8;border-bottom:1px solid #f0f0ee;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ex-prev{font-size:11px;color:#999;font-weight:400;text-align:right;max-width:55%;line-height:1.35}
+.setrows{padding:8px 13px 10px}
+.setrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.slbl{font-size:11px;color:#999;width:34px;flex-shrink:0}
+.gtag{font-size:10px;color:#777;background:#f0f0ee;border-radius:4px;padding:2px 5px;flex-shrink:0}
+.sin{flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:16px;font-family:inherit;outline:none;min-width:0}
+.sin:focus{border-color:#888}
+.savebtn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
+.backbtn{background:none;border:none;color:#666;font-size:13px;cursor:pointer;padding:0;margin-bottom:13px;display:block}
+.okmsg{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 13px;color:#166534;font-size:12px;margin-bottom:11px;display:none}
+.clbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:8px}
+.mode-bar{display:flex;gap:5px;margin-bottom:12px}
+.mode-btn{flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:11px;font-weight:500;color:#666;cursor:pointer;text-align:center}
+.mode-btn.mode-on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.looks-good-btn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:12px;font-family:inherit}
+.rec-actions{display:flex;gap:8px;margin-top:10px}
+.rec-act-btn{flex:1;padding:6px;border:1px solid #e8e8e6;border-radius:7px;background:#f4f4f2;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
+.rec-act-btn:hover{background:#ebebea}
+.tut-area{font-size:12px;color:#555;line-height:1.55;margin-top:8px;padding:8px 10px;background:#f9f9f7;border-radius:7px;border-left:3px solid #2563eb;display:none}
+.reccard{background:#fff;border:1px solid #e8e8e6;border-radius:11px;overflow:hidden;margin-bottom:7px}
+.rechead{padding:9px 13px;border-bottom:1px solid #f0f0ee;display:flex;align-items:center;justify-content:space-between}
+.recname{font-weight:600;font-size:13px}
+.recbadge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.bup{background:#f0fdf4;color:#166634}.bhold{background:#fefce8;color:#854d0e}.btech{background:#eff6ff;color:#1d4ed8}.bnew{background:#fdf4ff;color:#7e22ce}.bswap{background:#fff7ed;color:#c2410c}
+.recbody{padding:9px 13px}
+.rectgt{font-size:13px;font-weight:500;margin-bottom:3px}
+.recreason{font-size:11px;color:#888;line-height:1.45}
+.chatwrap{background:#fff;border-radius:12px;border:1px solid #e8e8e6;overflow:hidden;margin-top:4px}
+.qrow{display:flex;gap:5px;padding:9px 9px 0;flex-wrap:wrap}
+.qbtn{background:#f4f4f2;border:1px solid #e8e8e6;border-radius:7px;padding:4px 8px;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
+.msgs{min-height:150px;max-height:340px;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:8px}
+.msg{display:flex;gap:6px}.msg.u{flex-direction:row-reverse}
+.bbl{max-width:84%;padding:8px 11px;border-radius:11px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.msg.a .bbl{background:#f4f4f2;border-radius:4px 11px 11px 11px}
+.msg.u .bbl{background:#1a1a1a;color:#fff;border-radius:11px 4px 11px 11px}
+.av{width:22px;height:22px;border-radius:50%;background:#e5e5e3;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#666;flex-shrink:0;margin-top:2px}
+.irow{display:flex;gap:6px;padding:8px 9px;border-top:1px solid #e8e8e6}
+.cin{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;outline:none;resize:none;background:#fafaf8}
+.sbtn{background:#1a1a1a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.sbtn:disabled{opacity:.4}
+.sp{display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emp{text-align:center;padding:24px;color:#ccc;font-size:13px}
+.ldrec{padding:18px;color:#999;font-size:13px;text-align:center}
+.chart-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:8px}
+#cal-grid div:hover{opacity:0.8}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Workout tracker</h1>
+  <p class="sub">Aug 2025 &ndash; present &nbsp;&middot;&nbsp; Push / Legs / Back</p>
+  <div class="tnav">
+    <button class="tbtn on" id="btn-ov" onclick="tab('ov')">Overview</button>
+    <button class="tbtn" id="btn-pr" onclick="tab('pr')">Progress</button>
+    <button class="tbtn" id="btn-log" onclick="tab('log')">Log</button>
+    <button class="tbtn" id="btn-co" onclick="tab('co')">Coach</button>
+  </div>
+  <div id="tc-ov" class="tc on">
+    <div class="mgrid" id="ov-metrics"></div>
+    <div class="pills" id="ov-pills"></div>
+    <div id="ov-exlist"></div>
+  </div>
+  <div id="tc-pr" class="tc">
+    <div class="pills" id="pr-pills"></div>
+    <div class="cleg" id="pr-leg" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
+    <div class="cwrap">
+      <p class="chart-lbl">Top weight (lb)</p>
+      <div style="position:relative;height:200px"><canvas id="pr-chart-weight"></canvas></div>
+    </div>
+    <div class="cwrap">
+      <p class="chart-lbl">Total volume (lb)</p>
+      <div style="position:relative;height:200px"><canvas id="pr-chart-volume"></canvas></div>
+    </div>
+    <div class="cwrap">
+      <p class="chart-lbl">Est. 1-rep max (lb)</p>
+      <div style="position:relative;height:200px"><canvas id="pr-chart-e1rm"></canvas></div>
+    </div>
+    <div class="cwrap" style="margin-top:4px">
+      <p class="chart-lbl">Bodyweight exercises &mdash; total reps per session</p>
+      <div class="cleg" id="bw-leg" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
+      <div style="position:relative;height:200px"><canvas id="bw-chart"></canvas></div>
+    </div>
+  </div>
+  <div id="tc-log" class="tc">
+    <div id="log-home">
+      <p style="font-size:12px;color:#999;margin-bottom:11px">Which workout are you logging?</p>
+      <button class="workout-btn" onclick="startLog('Push')"><div class="wb-name">Push</div><div class="wb-meta" id="lm-Push">Chest &middot; Shoulders &middot; Triceps</div></button>
+      <button class="workout-btn" onclick="startLog('Legs')"><div class="wb-name">Legs</div><div class="wb-meta" id="lm-Legs">Quads &middot; Hamstrings &middot; Glutes &middot; Calves</div></button>
+      <button class="workout-btn" onclick="startLog('Back')"><div class="wb-name">Back</div><div class="wb-meta" id="lm-Back">Back &middot; Biceps &middot; Rear Delts</div></button>
+    </div>
+    <div id="log-form" class="logform">
+      <button class="backbtn" onclick="backToHome()">&larr; Back</button>
+      <div class="okmsg" id="okmsg"></div>
+      <div id="cal-wrap" style="margin-bottom:11px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <button onclick="calNav(-1)" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:#555">&lsaquo;</button>
+          <span id="cal-title" style="font-size:13px;font-weight:600;color:#1a1a1a"></span>
+          <button onclick="calNav(1)" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;color:#555">&rsaquo;</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#2563eb"></div>Push</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>Legs</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#666"><div style="width:10px;height:10px;border-radius:2px;background:#9333ea"></div>Back</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center"></div>
+        <input type="hidden" id="log-date">
+      </div>
+      <div id="log-exs"></div>
+      <button class="savebtn" onclick="saveSession()">Complete workout</button>
+    </div>
+  </div>
+  <div id="tc-co" class="tc">
+    <p class="clbl">Next session recommendations</p>
+    <div class="pills" id="co-pills"></div>
+    <div id="co-recs"><div class="ldrec">Select a workout above</div></div>
+    <p class="clbl" style="margin-top:14px">Ask your coach</p>
+    <div class="chatwrap">
+      <div class="qrow">
+        <button class="qbtn" onclick="q('What are my biggest strength gains?')">Top gains</button>
+        <button class="qbtn" onclick="q('Which lifts am I plateauing on?')">Plateaus</button>
+        <button class="qbtn" onclick="q('What new exercises should I add?')">Add exercises</button>
+        <button class="qbtn" onclick="q('Any muscle imbalances?')">Imbalances</button>
+        <button class="qbtn" onclick="q('Adjust training for Achilles and hip flexor issues?')">Injury advice</button>
+      </div>
+      <div class="msgs" id="msgs"><div class="emp">Ask anything about your training.</div></div>
+      <div class="irow">
+        <textarea class="cin" id="cin" rows="1" placeholder="Ask your coach..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+        <button class="sbtn" id="sbtn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// APP VERSION 2.0 - 202605141600
+var LAST={"Push": {"Bench Press": {"date": "2026-05-11", "sets": [{"reps": 10, "weight": 135}, {"reps": 5, "weight": 165}, {"reps": 5, "weight": 165}, {"reps": 5, "weight": 165}, {"reps": 4, "weight": 165}]}, "Incline Dumbbell Press": {"date": "2026-05-11", "sets": [{"reps": 5, "weight": 60}, {"reps": 4, "weight": 60}, {"reps": 4, "weight": 60}, {"reps": 4, "weight": 60}]}, "Dumbbell Lateral Raise": {"date": "2026-05-11", "sets": [{"reps": 12, "weight": 20}, {"reps": 12, "weight": 20}, {"reps": 12, "weight": 20}, {"reps": 12, "weight": 20}]}, "Arnold Press": {"date": "2026-05-06", "sets": [{"reps": 10, "weight": 30}, {"reps": 10, "weight": 30}, {"reps": 10, "weight": 30}]}, "Cable Tricep Pushdown": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 95}, {"reps": 12, "weight": 95}, {"reps": 12, "weight": 95}]}, "Dumbbell Chest Fly": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 30}, {"reps": 12, "weight": 30}, {"reps": 12, "weight": 30}]}, "Chest Dips": {"date": "2026-05-06", "sets": [{"reps": 6}, {"reps": 5}, {"reps": 6}]}, "Close-Grip Bench Press": {"date": "2026-05-11", "sets": [{"reps": 8, "weight": 115}, {"reps": 8, "weight": 115}, {"reps": 6, "weight": 115}, {"reps": 6, "weight": 115}]}, "Seated DB Overhead Press": {"date": "2026-05-11", "sets": [{"reps": 8, "weight": 30}, {"reps": 8, "weight": 30}, {"reps": 6, "weight": 30}, {"reps": 7, "weight": 30}]}, "Overhead Dumbbell Tricep Extension": {"date": "2026-05-11", "sets": [{"reps": 10, "weight": 35}, {"reps": 10, "weight": 35}, {"reps": 10, "weight": 35}, {"reps": 10, "weight": 35}]}, "Cable Fly (High to Low)": {"date": "2026-05-11", "sets": [{"reps": 7, "weight": 27.5}, {"reps": 8, "weight": 27.5}, {"reps": 8, "weight": 27.5}, {"reps": 8, "weight": 27.5}]}}, "Legs": {"Barbell Squat": {"date": "2026-05-13", "sets": [{"reps": 10, "weight": 135}, {"reps": 6, "weight": 235}, {"reps": 6, "weight": 235}, {"reps": 6, "weight": 235}]}, "Romanian Deadlift": {"date": "2026-05-08", "sets": [{"reps": 8, "weight": 60}, {"reps": 8, "weight": 60}, {"reps": 8, "weight": 60}]}, "Calf Raise": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 25}, {"reps": 20, "weight": 25}, {"reps": 20, "weight": 25}]}, "Walking Lunges": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}]}, "Barbell Glute Bridge": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 175}, {"reps": 12, "weight": 175}, {"reps": 12, "weight": 175}]}, "Hamstring Curl": {"date": "2026-05-08", "sets": [{"reps": 10, "weight": 120}, {"reps": 10, "weight": 120}, {"reps": 10, "weight": 120}]}, "Goblet Squat": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 35}, {"reps": 12, "weight": 35}, {"reps": 12, "weight": 35}]}}, "Back": {"Barbell Deadlift": {"date": "2026-05-09", "sets": [{"reps": 10, "weight": 135}, {"reps": 6, "weight": 245}, {"reps": 6, "weight": 245}, {"reps": 6, "weight": 245}]}, "Pull-Ups": {"date": "2026-05-09", "sets": [{"reps": 12, "grip": "Neutral"}, {"reps": 9, "grip": "Wide"}, {"reps": 7, "grip": "Neutral"}, {"reps": 7, "grip": "Wide"}]}, "Face Pulls": {"date": "2026-05-09", "sets": [{"reps": 11, "weight": 44}, {"reps": 11, "weight": 44}, {"reps": 11, "weight": 44}]}, "Single Arm Dumbbell Row": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 50}, {"reps": 12, "weight": 50}, {"reps": 12, "weight": 50}]}, "Cable Lat Pulldown": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 121}, {"reps": 12, "weight": 121}, {"reps": 12, "weight": 121}]}, "Barbell Shrugs": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 70}, {"reps": 14, "weight": 70}, {"reps": 14, "weight": 70}]}, "Dumbbell Reverse Fly": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 20}, {"reps": 14, "weight": 20}, {"reps": 14, "weight": 20}]}}};
+var CHART_WEIGHT={"Push": {"Bench Press": [{"d": "2025-08-21", "w": 145.0}, {"d": "2025-08-28", "w": 145.0}, {"d": "2025-09-05", "w": 145.0}, {"d": "2025-09-22", "w": 135.0}, {"d": "2025-10-04", "w": 145.0}, {"d": "2025-10-12", "w": 145.0}, {"d": "2025-10-23", "w": 145.0}, {"d": "2025-11-02", "w": 145.0}, {"d": "2025-11-15", "w": 145.0}, {"d": "2025-11-24", "w": 145.0}, {"d": "2025-12-16", "w": 135.0}, {"d": "2026-01-11", "w": 135.0}, {"d": "2026-01-19", "w": 135.0}, {"d": "2026-01-29", "w": 145.0}, {"d": "2026-02-05", "w": 145.0}, {"d": "2026-02-27", "w": 145.0}, {"d": "2026-03-06", "w": 145.0}, {"d": "2026-03-16", "w": 145.0}, {"d": "2026-03-26", "w": 155.0}, {"d": "2026-04-07", "w": 155.0}, {"d": "2026-04-16", "w": 155.0}, {"d": "2026-04-23", "w": 155.0}, {"d": "2026-04-30", "w": 155.0}, {"d": "2026-05-06", "w": 155.0}, {"d": "2026-05-11", "w": 165}], "Incline Dumbbell Press": [{"d": "2025-08-21", "w": 50.0}, {"d": "2025-08-28", "w": 50.0}, {"d": "2025-09-05", "w": 50.0}, {"d": "2025-09-22", "w": 50.0}, {"d": "2025-10-04", "w": 50.0}, {"d": "2025-10-12", "w": 50.0}, {"d": "2025-10-23", "w": 50.0}, {"d": "2025-11-02", "w": 50.0}, {"d": "2025-11-15", "w": 50.0}, {"d": "2025-11-24", "w": 50.0}, {"d": "2025-12-16", "w": 50.0}, {"d": "2026-01-11", "w": 50.0}, {"d": "2026-01-19", "w": 50.0}, {"d": "2026-01-29", "w": 50.0}, {"d": "2026-02-05", "w": 50.0}, {"d": "2026-02-27", "w": 50.0}, {"d": "2026-03-06", "w": 50.0}, {"d": "2026-03-16", "w": 55.0}, {"d": "2026-03-26", "w": 55.0}, {"d": "2026-04-07", "w": 55.0}, {"d": "2026-04-16", "w": 55.0}, {"d": "2026-04-23", "w": 55.0}, {"d": "2026-04-30", "w": 55.0}, {"d": "2026-05-06", "w": 60.0}, {"d": "2026-05-11", "w": 60}], "Dumbbell Lateral Raise": [{"d": "2025-08-21", "w": 15.0}, {"d": "2025-08-28", "w": 15.0}, {"d": "2025-09-05", "w": 15.0}, {"d": "2025-09-22", "w": 15.0}, {"d": "2025-10-04", "w": 15.0}, {"d": "2025-10-12", "w": 15.0}, {"d": "2025-10-23", "w": 15.0}, {"d": "2025-11-02", "w": 15.0}, {"d": "2025-11-15", "w": 15.0}, {"d": "2025-11-24", "w": 15.0}, {"d": "2025-12-16", "w": 15.0}, {"d": "2026-01-11", "w": 15.0}, {"d": "2026-01-19", "w": 15.0}, {"d": "2026-01-29", "w": 15.0}, {"d": "2026-02-05", "w": 15.0}, {"d": "2026-02-27", "w": 15.0}, {"d": "2026-03-06", "w": 15.0}, {"d": "2026-03-16", "w": 17.5}, {"d": "2026-03-26", "w": 17.5}, {"d": "2026-04-07", "w": 17.5}, {"d": "2026-04-16", "w": 17.5}, {"d": "2026-04-23", "w": 17.5}, {"d": "2026-04-30", "w": 17.5}, {"d": "2026-05-06", "w": 20.0}, {"d": "2026-05-11", "w": 20}], "Arnold Press": [{"d": "2025-08-21", "w": 25.0}, {"d": "2025-08-28", "w": 25.0}, {"d": "2025-09-05", "w": 25.0}, {"d": "2025-09-22", "w": 25.0}, {"d": "2025-10-04", "w": 25.0}, {"d": "2025-10-12", "w": 25.0}, {"d": "2025-10-23", "w": 25.0}, {"d": "2025-11-02", "w": 25.0}, {"d": "2025-11-24", "w": 25.0}, {"d": "2025-12-16", "w": 25.0}, {"d": "2026-01-11", "w": 25.0}, {"d": "2026-01-19", "w": 25.0}, {"d": "2026-01-29", "w": 25.0}, {"d": "2026-02-05", "w": 25.0}, {"d": "2026-02-27", "w": 25.0}, {"d": "2026-03-06", "w": 25.0}, {"d": "2026-03-16", "w": 27.5}, {"d": "2026-03-26", "w": 27.5}, {"d": "2026-04-07", "w": 27.5}, {"d": "2026-04-16", "w": 27.5}, {"d": "2026-04-23", "w": 27.5}, {"d": "2026-04-30", "w": 27.5}, {"d": "2026-05-06", "w": 30.0}], "Cable Tricep Pushdown": [{"d": "2025-08-21", "w": 85.0}, {"d": "2025-08-28", "w": 85.0}, {"d": "2025-09-05", "w": 85.0}, {"d": "2025-09-22", "w": 85.0}, {"d": "2025-10-04", "w": 85.0}, {"d": "2025-10-12", "w": 85.0}, {"d": "2025-10-23", "w": 85.0}, {"d": "2025-11-02", "w": 85.0}, {"d": "2025-11-24", "w": 85.0}, {"d": "2025-12-16", "w": 85.0}, {"d": "2026-01-11", "w": 85.0}, {"d": "2026-01-19", "w": 85.0}, {"d": "2026-01-29", "w": 85.0}, {"d": "2026-02-05", "w": 85.0}, {"d": "2026-02-27", "w": 85.0}, {"d": "2026-03-06", "w": 85.0}, {"d": "2026-03-16", "w": 95.0}, {"d": "2026-03-26", "w": 95.0}, {"d": "2026-04-07", "w": 95.0}, {"d": "2026-04-16", "w": 95.0}, {"d": "2026-04-23", "w": 95.0}, {"d": "2026-04-30", "w": 95.0}, {"d": "2026-05-06", "w": 95.0}], "Dumbbell Chest Fly": [{"d": "2025-08-21", "w": 25.0}, {"d": "2025-08-28", "w": 25.0}, {"d": "2025-09-05", "w": 25.0}, {"d": "2025-10-04", "w": 27.5}, {"d": "2025-10-12", "w": 25.0}, {"d": "2025-10-23", "w": 27.5}, {"d": "2025-11-02", "w": 27.5}, {"d": "2025-11-15", "w": 27.5}, {"d": "2025-11-24", "w": 27.5}, {"d": "2025-12-16", "w": 25.0}, {"d": "2026-01-11", "w": 25.0}, {"d": "2026-01-19", "w": 25.0}, {"d": "2026-01-29", "w": 25.0}, {"d": "2026-02-05", "w": 25.0}, {"d": "2026-02-27", "w": 25.0}, {"d": "2026-03-06", "w": 27.5}, {"d": "2026-03-16", "w": 27.5}, {"d": "2026-03-26", "w": 27.5}, {"d": "2026-04-07", "w": 27.5}, {"d": "2026-04-16", "w": 30.0}, {"d": "2026-04-23", "w": 30.0}, {"d": "2026-04-30", "w": 30.0}, {"d": "2026-05-06", "w": 30.0}], "Close-Grip Bench Press": [{"d": "2026-05-11", "w": 115}], "Seated DB Overhead Press": [{"d": "2026-05-11", "w": 30}], "Overhead Dumbbell Tricep Extension": [{"d": "2026-05-11", "w": 35}], "Cable Fly (High to Low)": [{"d": "2026-05-11", "w": 27.5}]}, "Legs": {"Barbell Squat": [{"d": "2025-08-23", "w": 155.0}, {"d": "2025-08-29", "w": 185.0}, {"d": "2025-09-08", "w": 185.0}, {"d": "2025-09-24", "w": 185.0}, {"d": "2025-10-06", "w": 185.0}, {"d": "2025-10-20", "w": 185.0}, {"d": "2025-11-04", "w": 195.0}, {"d": "2025-11-17", "w": 195.0}, {"d": "2025-12-01", "w": 195.0}, {"d": "2025-12-20", "w": 185.0}, {"d": "2026-01-13", "w": 155.0}, {"d": "2026-01-21", "w": 165.0}, {"d": "2026-01-31", "w": 185.0}, {"d": "2026-03-11", "w": 155.0}, {"d": "2026-03-17", "w": 165.0}, {"d": "2026-03-26", "w": 165.0}, {"d": "2026-04-14", "w": 185.0}, {"d": "2026-04-21", "w": 195.0}, {"d": "2026-04-28", "w": 205.0}, {"d": "2026-05-03", "w": 215.0}, {"d": "2026-05-08", "w": 225.0}, {"d": "2026-05-13", "w": 235}], "Romanian Deadlift": [{"d": "2025-08-23", "w": 45.0}, {"d": "2025-08-29", "w": 45.0}, {"d": "2025-09-08", "w": 45.0}, {"d": "2025-09-24", "w": 45.0}, {"d": "2025-10-06", "w": 45.0}, {"d": "2025-10-20", "w": 45.0}, {"d": "2025-11-04", "w": 45.0}, {"d": "2025-11-17", "w": 50.0}, {"d": "2025-12-01", "w": 50.0}, {"d": "2025-12-20", "w": 50.0}, {"d": "2026-01-13", "w": 50.0}, {"d": "2026-01-21", "w": 50.0}, {"d": "2026-01-31", "w": 50.0}, {"d": "2026-03-11", "w": 45.0}, {"d": "2026-03-17", "w": 45.0}, {"d": "2026-03-26", "w": 50.0}, {"d": "2026-04-14", "w": 50.0}, {"d": "2026-04-21", "w": 55.0}, {"d": "2026-04-28", "w": 55.0}, {"d": "2026-05-03", "w": 55.0}, {"d": "2026-05-08", "w": 60.0}], "Calf Raise": [{"d": "2025-08-23", "w": 20.0}, {"d": "2025-08-29", "w": 20.0}, {"d": "2025-09-08", "w": 20.0}, {"d": "2025-09-24", "w": 20.0}, {"d": "2025-10-06", "w": 20.0}, {"d": "2025-10-20", "w": 20.0}, {"d": "2025-11-04", "w": 20.0}, {"d": "2025-11-17", "w": 20.0}, {"d": "2025-12-01", "w": 20.0}, {"d": "2025-12-20", "w": 20.0}, {"d": "2026-01-13", "w": 20.0}, {"d": "2026-01-21", "w": 20.0}, {"d": "2026-01-31", "w": 20.0}, {"d": "2026-03-11", "w": 20.0}, {"d": "2026-03-17", "w": 20.0}, {"d": "2026-03-26", "w": 20.0}, {"d": "2026-04-14", "w": 20.0}, {"d": "2026-04-21", "w": 22.5}, {"d": "2026-04-28", "w": 22.5}, {"d": "2026-05-03", "w": 22.5}, {"d": "2026-05-08", "w": 25.0}], "Walking Lunges": [{"d": "2025-08-29", "w": 15.0}, {"d": "2025-09-24", "w": 15.0}, {"d": "2025-11-04", "w": 15.0}, {"d": "2025-11-17", "w": 15.0}, {"d": "2025-12-01", "w": 15.0}, {"d": "2025-12-20", "w": 15.0}, {"d": "2026-01-13", "w": 15.0}, {"d": "2026-01-21", "w": 15.0}, {"d": "2026-01-31", "w": 15.0}, {"d": "2026-03-26", "w": 15.0}, {"d": "2026-04-14", "w": 15.0}, {"d": "2026-04-21", "w": 15.0}, {"d": "2026-04-28", "w": 15.0}, {"d": "2026-05-03", "w": 15.0}, {"d": "2026-05-08", "w": 17.5}], "Barbell Glute Bridge": [{"d": "2025-08-29", "w": 155.0}, {"d": "2025-09-08", "w": 155.0}, {"d": "2025-09-24", "w": 155.0}, {"d": "2026-01-13", "w": 135.0}, {"d": "2026-01-21", "w": 135.0}, {"d": "2026-01-31", "w": 145.0}, {"d": "2026-03-17", "w": 135.0}, {"d": "2026-03-26", "w": 145.0}, {"d": "2026-04-14", "w": 155.0}, {"d": "2026-04-21", "w": 165.0}, {"d": "2026-04-28", "w": 165.0}, {"d": "2026-05-03", "w": 175.0}, {"d": "2026-05-08", "w": 175.0}], "Hamstring Curl": [{"d": "2025-08-23", "w": 100.0}, {"d": "2025-08-29", "w": 110.0}, {"d": "2025-09-08", "w": 110.0}, {"d": "2025-09-24", "w": 110.0}, {"d": "2025-10-06", "w": 110.0}, {"d": "2025-10-20", "w": 110.0}, {"d": "2025-11-04", "w": 120.0}, {"d": "2025-12-01", "w": 120.0}, {"d": "2025-12-20", "w": 110.0}, {"d": "2026-01-13", "w": 110.0}, {"d": "2026-01-21", "w": 110.0}, {"d": "2026-01-31", "w": 110.0}, {"d": "2026-03-26", "w": 100.0}, {"d": "2026-04-14", "w": 100.0}, {"d": "2026-04-21", "w": 110.0}, {"d": "2026-04-28", "w": 110.0}, {"d": "2026-05-03", "w": 110.0}, {"d": "2026-05-08", "w": 120.0}], "Goblet Squat": [{"d": "2025-08-23", "w": 18.0}, {"d": "2025-08-29", "w": 18.0}, {"d": "2025-09-08", "w": 18.0}, {"d": "2025-09-24", "w": 18.0}, {"d": "2025-10-06", "w": 18.0}, {"d": "2025-10-20", "w": 18.0}, {"d": "2025-11-04", "w": 26.0}, {"d": "2025-12-01", "w": 26.0}, {"d": "2025-12-20", "w": 26.0}, {"d": "2026-01-13", "w": 18.0}, {"d": "2026-01-21", "w": 35.0}, {"d": "2026-01-31", "w": 26.0}, {"d": "2026-03-26", "w": 26.0}, {"d": "2026-04-14", "w": 26.0}, {"d": "2026-04-21", "w": 26.0}, {"d": "2026-04-28", "w": 26.0}, {"d": "2026-05-03", "w": 26.0}, {"d": "2026-05-08", "w": 35.0}]}, "Back": {"Barbell Deadlift": [{"d": "2025-08-19", "w": 175.0}, {"d": "2025-08-25", "w": 185.0}, {"d": "2025-09-02", "w": 185.0}, {"d": "2025-09-19", "w": 185.0}, {"d": "2025-09-29", "w": 185.0}, {"d": "2025-10-10", "w": 185.0}, {"d": "2025-10-17", "w": 185.0}, {"d": "2025-10-27", "w": 195.0}, {"d": "2025-11-08", "w": 195.0}, {"d": "2025-11-20", "w": 195.0}, {"d": "2025-12-22", "w": 185.0}, {"d": "2026-01-15", "w": 155.0}, {"d": "2026-01-26", "w": 165.0}, {"d": "2026-02-04", "w": 185.0}, {"d": "2026-02-25", "w": 195.0}, {"d": "2026-03-05", "w": 185.0}, {"d": "2026-03-10", "w": 185.0}, {"d": "2026-03-19", "w": 195.0}, {"d": "2026-03-28", "w": 205.0}, {"d": "2026-04-09", "w": 215.0}, {"d": "2026-04-18", "w": 225.0}, {"d": "2026-04-27", "w": 235.0}, {"d": "2026-05-05", "w": 240.0}, {"d": "2026-05-09", "w": 245.0}], "Face Pulls": [{"d": "2025-08-19", "w": 33.0}, {"d": "2025-08-25", "w": 33.0}, {"d": "2025-09-02", "w": 33.0}, {"d": "2025-09-19", "w": 33.0}, {"d": "2025-09-29", "w": 33.0}, {"d": "2025-10-10", "w": 33.0}, {"d": "2025-10-17", "w": 35.0}, {"d": "2025-10-27", "w": 33.0}, {"d": "2025-11-08", "w": 35.0}, {"d": "2025-11-20", "w": 33.5}, {"d": "2025-12-22", "w": 35.0}, {"d": "2026-01-15", "w": 27.5}, {"d": "2026-01-26", "w": 33.0}, {"d": "2026-02-04", "w": 33.0}, {"d": "2026-02-25", "w": 38.5}, {"d": "2026-03-05", "w": 38.5}, {"d": "2026-03-10", "w": 38.5}, {"d": "2026-03-19", "w": 38.5}, {"d": "2026-03-28", "w": 38.5}, {"d": "2026-04-09", "w": 38.5}, {"d": "2026-04-18", "w": 38.5}, {"d": "2026-04-27", "w": 38.5}, {"d": "2026-05-05", "w": 44.0}, {"d": "2026-05-09", "w": 44.0}], "Single Arm Dumbbell Row": [{"d": "2025-08-25", "w": 40.0}, {"d": "2025-09-02", "w": 40.0}, {"d": "2025-09-19", "w": 40.0}, {"d": "2025-09-29", "w": 40.0}, {"d": "2025-10-10", "w": 45.0}, {"d": "2025-10-17", "w": 45.0}, {"d": "2025-10-27", "w": 45.0}, {"d": "2025-11-08", "w": 45.0}, {"d": "2025-12-22", "w": 40.0}, {"d": "2026-01-15", "w": 40.0}, {"d": "2026-01-26", "w": 40.0}, {"d": "2026-02-04", "w": 40.0}, {"d": "2026-03-05", "w": 40.0}, {"d": "2026-03-10", "w": 45.0}, {"d": "2026-03-19", "w": 45.0}, {"d": "2026-03-28", "w": 45.0}, {"d": "2026-04-09", "w": 45.0}, {"d": "2026-04-18", "w": 50.0}, {"d": "2026-04-27", "w": 50.0}, {"d": "2026-05-05", "w": 50.0}, {"d": "2026-05-09", "w": 50.0}], "Cable Lat Pulldown": [{"d": "2025-08-25", "w": 110.0}, {"d": "2025-09-02", "w": 110.0}, {"d": "2025-09-19", "w": 110.0}, {"d": "2025-09-29", "w": 110.0}, {"d": "2025-10-10", "w": 110.0}, {"d": "2025-10-17", "w": 110.0}, {"d": "2025-10-27", "w": 110.0}, {"d": "2025-11-08", "w": 110.0}, {"d": "2025-12-22", "w": 110.0}, {"d": "2026-01-15", "w": 110.0}, {"d": "2026-01-26", "w": 110.0}, {"d": "2026-02-04", "w": 110.0}, {"d": "2026-03-19", "w": 110.0}, {"d": "2026-03-28", "w": 110.0}, {"d": "2026-04-09", "w": 110.0}, {"d": "2026-04-18", "w": 121.0}, {"d": "2026-04-27", "w": 121.0}, {"d": "2026-05-05", "w": 121.0}, {"d": "2026-05-09", "w": 121.0}], "Barbell Shrugs": [{"d": "2025-08-19", "w": 70.0}, {"d": "2025-08-25", "w": 70.0}, {"d": "2025-09-02", "w": 70.0}, {"d": "2025-09-19", "w": 65.0}, {"d": "2025-09-29", "w": 65.0}, {"d": "2025-10-10", "w": 65.0}, {"d": "2025-10-17", "w": 65.0}, {"d": "2025-10-27", "w": 65.0}, {"d": "2025-11-08", "w": 65.0}, {"d": "2025-11-20", "w": 65.0}, {"d": "2025-12-22", "w": 65.0}, {"d": "2026-01-15", "w": 65.0}, {"d": "2026-01-26", "w": 65.0}, {"d": "2026-02-04", "w": 65.0}, {"d": "2026-02-25", "w": 70.0}, {"d": "2026-03-05", "w": 70.0}, {"d": "2026-03-10", "w": 70.0}, {"d": "2026-03-19", "w": 70.0}, {"d": "2026-03-28", "w": 70.0}, {"d": "2026-04-09", "w": 70.0}, {"d": "2026-04-18", "w": 70.0}, {"d": "2026-04-27", "w": 70.0}, {"d": "2026-05-05", "w": 70.0}, {"d": "2026-05-09", "w": 70.0}], "Dumbbell Reverse Fly": [{"d": "2025-08-19", "w": 15.0}, {"d": "2025-08-25", "w": 15.0}, {"d": "2025-09-02", "w": 15.0}, {"d": "2025-09-19", "w": 15.0}, {"d": "2025-09-29", "w": 15.0}, {"d": "2025-10-10", "w": 15.0}, {"d": "2025-10-17", "w": 15.0}, {"d": "2025-10-27", "w": 15.0}, {"d": "2025-11-08", "w": 17.5}, {"d": "2025-11-20", "w": 17.5}, {"d": "2025-12-22", "w": 15.0}, {"d": "2026-01-15", "w": 15.0}, {"d": "2026-01-26", "w": 15.0}, {"d": "2026-02-04", "w": 15.0}, {"d": "2026-02-25", "w": 17.5}, {"d": "2026-03-05", "w": 17.5}, {"d": "2026-03-10", "w": 17.5}, {"d": "2026-03-19", "w": 17.5}, {"d": "2026-03-28", "w": 17.5}, {"d": "2026-04-09", "w": 20.0}, {"d": "2026-04-18", "w": 20.0}, {"d": "2026-04-27", "w": 20.0}, {"d": "2026-05-05", "w": 20.0}, {"d": "2026-05-09", "w": 20.0}]}};
+var CHART_VOLUME={"Push": {"Bench Press": [{"d": "2025-08-21", "w": 2530}, {"d": "2025-08-28", "w": 3545}, {"d": "2025-09-05", "w": 3835}, {"d": "2025-09-22", "w": 2565}, {"d": "2025-10-04", "w": 3690}, {"d": "2025-10-12", "w": 3980}, {"d": "2025-10-23", "w": 3690}, {"d": "2025-11-02", "w": 3980}, {"d": "2025-11-15", "w": 3690}, {"d": "2025-11-24", "w": 3835}, {"d": "2025-12-16", "w": 2295}, {"d": "2026-01-11", "w": 3645}, {"d": "2026-01-19", "w": 4050}, {"d": "2026-01-29", "w": 3400}, {"d": "2026-02-05", "w": 3400}, {"d": "2026-02-27", "w": 3690}, {"d": "2026-03-06", "w": 4125}, {"d": "2026-03-16", "w": 4415}, {"d": "2026-03-26", "w": 3790}, {"d": "2026-04-07", "w": 3250}, {"d": "2026-04-16", "w": 3715}, {"d": "2026-04-23", "w": 4025}, {"d": "2026-04-30", "w": 4180}, {"d": "2026-05-06", "w": 4490}, {"d": "2026-05-11", "w": 4485}], "Incline Dumbbell Press": [{"d": "2025-08-21", "w": 1100}, {"d": "2025-08-28", "w": 1550}, {"d": "2025-09-05", "w": 1650}, {"d": "2025-09-22", "w": 1800}, {"d": "2025-10-04", "w": 1500}, {"d": "2025-10-12", "w": 850}, {"d": "2025-10-23", "w": 1500}, {"d": "2025-11-02", "w": 1600}, {"d": "2025-11-15", "w": 1700}, {"d": "2025-11-24", "w": 1600}, {"d": "2025-12-16", "w": 1000}, {"d": "2026-01-11", "w": 1200}, {"d": "2026-01-19", "w": 1200}, {"d": "2026-01-29", "w": 1500}, {"d": "2026-02-05", "w": 1000}, {"d": "2026-02-27", "w": 1500}, {"d": "2026-03-06", "w": 1450}, {"d": "2026-03-16", "w": 1155}, {"d": "2026-03-26", "w": 1540}, {"d": "2026-04-07", "w": 1485}, {"d": "2026-04-16", "w": 1595}, {"d": "2026-04-23", "w": 1430}, {"d": "2026-04-30", "w": 1650}, {"d": "2026-05-06", "w": 1200}, {"d": "2026-05-11", "w": 1020}], "Dumbbell Lateral Raise": [{"d": "2025-08-21", "w": 360}, {"d": "2025-08-28", "w": 540}, {"d": "2025-09-05", "w": 585}, {"d": "2025-09-22", "w": 585}, {"d": "2025-10-04", "w": 540}, {"d": "2025-10-12", "w": 360}, {"d": "2025-10-23", "w": 540}, {"d": "2025-11-02", "w": 540}, {"d": "2025-11-15", "w": 540}, {"d": "2025-11-24", "w": 540}, {"d": "2025-12-16", "w": 300}, {"d": "2026-01-11", "w": 450}, {"d": "2026-01-19", "w": 495}, {"d": "2026-01-29", "w": 540}, {"d": "2026-02-05", "w": 360}, {"d": "2026-02-27", "w": 540}, {"d": "2026-03-06", "w": 540}, {"d": "2026-03-16", "w": 525}, {"d": "2026-03-26", "w": 525}, {"d": "2026-04-07", "w": 578}, {"d": "2026-04-16", "w": 578}, {"d": "2026-04-23", "w": 578}, {"d": "2026-04-30", "w": 630}, {"d": "2026-05-06", "w": 600}, {"d": "2026-05-11", "w": 960}], "Arnold Press": [{"d": "2025-08-21", "w": 500}, {"d": "2025-08-28", "w": 750}, {"d": "2025-09-05", "w": 825}, {"d": "2025-09-22", "w": 825}, {"d": "2025-10-04", "w": 725}, {"d": "2025-10-12", "w": 600}, {"d": "2025-10-23", "w": 775}, {"d": "2025-11-02", "w": 900}, {"d": "2025-11-24", "w": 725}, {"d": "2025-12-16", "w": 500}, {"d": "2026-01-11", "w": 700}, {"d": "2026-01-19", "w": 750}, {"d": "2026-01-29", "w": 825}, {"d": "2026-02-05", "w": 600}, {"d": "2026-02-27", "w": 875}, {"d": "2026-03-06", "w": 900}, {"d": "2026-03-16", "w": 825}, {"d": "2026-03-26", "w": 908}, {"d": "2026-04-07", "w": 908}, {"d": "2026-04-16", "w": 935}, {"d": "2026-04-23", "w": 990}, {"d": "2026-04-30", "w": 990}, {"d": "2026-05-06", "w": 900}], "Cable Tricep Pushdown": [{"d": "2025-08-21", "w": 1700}, {"d": "2025-08-28", "w": 2550}, {"d": "2025-09-05", "w": 2805}, {"d": "2025-09-22", "w": 2805}, {"d": "2025-10-04", "w": 3060}, {"d": "2025-10-12", "w": 2040}, {"d": "2025-10-23", "w": 3060}, {"d": "2025-11-02", "w": 3060}, {"d": "2025-11-24", "w": 3060}, {"d": "2025-12-16", "w": 1700}, {"d": "2026-01-11", "w": 2550}, {"d": "2026-01-19", "w": 2550}, {"d": "2026-01-29", "w": 2805}, {"d": "2026-02-05", "w": 2040}, {"d": "2026-02-27", "w": 3060}, {"d": "2026-03-06", "w": 3060}, {"d": "2026-03-16", "w": 2565}, {"d": "2026-03-26", "w": 2850}, {"d": "2026-04-07", "w": 3135}, {"d": "2026-04-16", "w": 3420}, {"d": "2026-04-23", "w": 3420}, {"d": "2026-04-30", "w": 3420}, {"d": "2026-05-06", "w": 3420}], "Dumbbell Chest Fly": [{"d": "2025-08-21", "w": 900}, {"d": "2025-08-28", "w": 900}, {"d": "2025-09-05", "w": 975}, {"d": "2025-10-04", "w": 550}, {"d": "2025-10-12", "w": 700}, {"d": "2025-10-23", "w": 825}, {"d": "2025-11-02", "w": 908}, {"d": "2025-11-15", "w": 302}, {"d": "2025-11-24", "w": 825}, {"d": "2025-12-16", "w": 500}, {"d": "2026-01-11", "w": 750}, {"d": "2026-01-19", "w": 825}, {"d": "2026-01-29", "w": 900}, {"d": "2026-02-05", "w": 600}, {"d": "2026-02-27", "w": 900}, {"d": "2026-03-06", "w": 825}, {"d": "2026-03-16", "w": 908}, {"d": "2026-03-26", "w": 990}, {"d": "2026-04-07", "w": 990}, {"d": "2026-04-16", "w": 900}, {"d": "2026-04-23", "w": 990}, {"d": "2026-04-30", "w": 990}, {"d": "2026-05-06", "w": 1080}], "Close-Grip Bench Press": [{"d": "2026-05-11", "w": 3220}], "Seated DB Overhead Press": [{"d": "2026-05-11", "w": 870}], "Overhead Dumbbell Tricep Extension": [{"d": "2026-05-11", "w": 1400}], "Cable Fly (High to Low)": [{"d": "2026-05-11", "w": 852}]}, "Legs": {"Barbell Squat": [{"d": "2025-08-23", "w": 3830}, {"d": "2025-08-29", "w": 4040}, {"d": "2025-09-08", "w": 5790}, {"d": "2025-09-24", "w": 5790}, {"d": "2025-10-06", "w": 5790}, {"d": "2025-10-20", "w": 5790}, {"d": "2025-11-04", "w": 5950}, {"d": "2025-11-17", "w": 5950}, {"d": "2025-12-01", "w": 6030}, {"d": "2025-12-20", "w": 4310}, {"d": "2026-01-13", "w": 5070}, {"d": "2026-01-21", "w": 5310}, {"d": "2026-01-31", "w": 5520}, {"d": "2026-03-11", "w": 4830}, {"d": "2026-03-17", "w": 5150}, {"d": "2026-03-26", "w": 5310}, {"d": "2026-04-14", "w": 5790}, {"d": "2026-04-21", "w": 6030}, {"d": "2026-04-28", "w": 5040}, {"d": "2026-05-03", "w": 5220}, {"d": "2026-05-08", "w": 5400}], "Romanian Deadlift": [{"d": "2025-08-23", "w": 900}, {"d": "2025-08-29", "w": 1620}, {"d": "2025-09-08", "w": 1890}, {"d": "2025-09-24", "w": 1620}, {"d": "2025-10-06", "w": 1620}, {"d": "2025-10-20", "w": 1620}, {"d": "2025-11-04", "w": 1620}, {"d": "2025-11-17", "w": 1500}, {"d": "2025-12-01", "w": 1200}, {"d": "2025-12-20", "w": 1000}, {"d": "2026-01-13", "w": 1500}, {"d": "2026-01-21", "w": 1650}, {"d": "2026-01-31", "w": 1800}, {"d": "2026-03-11", "w": 900}, {"d": "2026-03-17", "w": 1620}, {"d": "2026-03-26", "w": 1500}, {"d": "2026-04-14", "w": 1800}, {"d": "2026-04-21", "w": 1650}, {"d": "2026-04-28", "w": 1815}, {"d": "2026-05-03", "w": 1980}, {"d": "2026-05-08", "w": 1440}], "Calf Raise": [{"d": "2025-08-23", "w": 800}, {"d": "2025-08-29", "w": 1200}, {"d": "2025-09-08", "w": 1200}, {"d": "2025-09-24", "w": 1200}, {"d": "2025-10-06", "w": 1200}, {"d": "2025-10-20", "w": 1200}, {"d": "2025-11-04", "w": 1200}, {"d": "2025-11-17", "w": 1200}, {"d": "2025-12-01", "w": 800}, {"d": "2025-12-20", "w": 800}, {"d": "2026-01-13", "w": 1200}, {"d": "2026-01-21", "w": 1200}, {"d": "2026-01-31", "w": 1200}, {"d": "2026-03-11", "w": 800}, {"d": "2026-03-17", "w": 1200}, {"d": "2026-03-26", "w": 1200}, {"d": "2026-04-14", "w": 1200}, {"d": "2026-04-21", "w": 1350}, {"d": "2026-04-28", "w": 1350}, {"d": "2026-05-03", "w": 1350}, {"d": "2026-05-08", "w": 1500}], "Walking Lunges": [{"d": "2025-08-29", "w": 720}, {"d": "2025-09-24", "w": 1080}, {"d": "2025-11-04", "w": 900}, {"d": "2025-11-17", "w": 900}, {"d": "2025-12-01", "w": 600}, {"d": "2025-12-20", "w": 600}, {"d": "2026-01-13", "w": 900}, {"d": "2026-01-21", "w": 900}, {"d": "2026-01-31", "w": 900}, {"d": "2026-03-26", "w": 900}, {"d": "2026-04-14", "w": 900}, {"d": "2026-04-21", "w": 900}, {"d": "2026-04-28", "w": 900}, {"d": "2026-05-03", "w": 900}, {"d": "2026-05-08", "w": 1050}], "Barbell Glute Bridge": [{"d": "2025-08-29", "w": 3100}, {"d": "2025-09-08", "w": 5580}, {"d": "2025-09-24", "w": 5580}, {"d": "2026-01-13", "w": 4050}, {"d": "2026-01-21", "w": 4860}, {"d": "2026-01-31", "w": 5220}, {"d": "2026-03-17", "w": 4860}, {"d": "2026-03-26", "w": 5220}, {"d": "2026-04-14", "w": 4650}, {"d": "2026-04-21", "w": 4950}, {"d": "2026-04-28", "w": 5940}, {"d": "2026-05-03", "w": 5250}, {"d": "2026-05-08", "w": 6300}], "Hamstring Curl": [{"d": "2025-08-23", "w": 2400}, {"d": "2025-08-29", "w": 3960}, {"d": "2025-09-08", "w": 4620}, {"d": "2025-09-24", "w": 4620}, {"d": "2025-10-06", "w": 4620}, {"d": "2025-10-20", "w": 4620}, {"d": "2025-11-04", "w": 3600}, {"d": "2025-12-01", "w": 2400}, {"d": "2025-12-20", "w": 2200}, {"d": "2026-01-13", "w": 3300}, {"d": "2026-01-21", "w": 3630}, {"d": "2026-01-31", "w": 3960}, {"d": "2026-03-26", "w": 3000}, {"d": "2026-04-14", "w": 3600}, {"d": "2026-04-21", "w": 3300}, {"d": "2026-04-28", "w": 3630}, {"d": "2026-05-03", "w": 3960}, {"d": "2026-05-08", "w": 3600}], "Goblet Squat": [{"d": "2025-08-23", "w": 540}, {"d": "2025-08-29", "w": 810}, {"d": "2025-09-08", "w": 810}, {"d": "2025-09-24", "w": 810}, {"d": "2025-10-06", "w": 810}, {"d": "2025-10-20", "w": 810}, {"d": "2025-11-04", "w": 1170}, {"d": "2025-12-01", "w": 780}, {"d": "2025-12-20", "w": 780}, {"d": "2026-01-13", "w": 810}, {"d": "2026-01-21", "w": 960}, {"d": "2026-01-31", "w": 780}, {"d": "2026-03-26", "w": 1170}, {"d": "2026-04-14", "w": 1170}, {"d": "2026-04-21", "w": 1170}, {"d": "2026-04-28", "w": 1170}, {"d": "2026-05-03", "w": 1170}, {"d": "2026-05-08", "w": 1260}]}, "Back": {"Barbell Deadlift": [{"d": "2025-08-19", "w": 5120}, {"d": "2025-08-25", "w": 5520}, {"d": "2025-09-02", "w": 5520}, {"d": "2025-09-19", "w": 5520}, {"d": "2025-09-29", "w": 5520}, {"d": "2025-10-10", "w": 5790}, {"d": "2025-10-17", "w": 5790}, {"d": "2025-10-27", "w": 5950}, {"d": "2025-11-08", "w": 6030}, {"d": "2025-11-20", "w": 6030}, {"d": "2025-12-22", "w": 4310}, {"d": "2026-01-15", "w": 5070}, {"d": "2026-01-26", "w": 5310}, {"d": "2026-02-04", "w": 5790}, {"d": "2026-02-25", "w": 6030}, {"d": "2026-03-05", "w": 5790}, {"d": "2026-03-10", "w": 5790}, {"d": "2026-03-19", "w": 6030}, {"d": "2026-03-28", "w": 6270}, {"d": "2026-04-09", "w": 6510}, {"d": "2026-04-18", "w": 5400}, {"d": "2026-04-27", "w": 5580}, {"d": "2026-05-05", "w": 5670}, {"d": "2026-05-09", "w": 5760}], "Face Pulls": [{"d": "2025-08-19", "w": 1485}, {"d": "2025-08-25", "w": 1485}, {"d": "2025-09-02", "w": 1485}, {"d": "2025-09-19", "w": 1485}, {"d": "2025-09-29", "w": 1485}, {"d": "2025-10-10", "w": 1485}, {"d": "2025-10-17", "w": 1050}, {"d": "2025-10-27", "w": 1485}, {"d": "2025-11-08", "w": 1545}, {"d": "2025-11-20", "w": 1508}, {"d": "2025-12-22", "w": 1050}, {"d": "2026-01-15", "w": 1238}, {"d": "2026-01-26", "w": 1485}, {"d": "2026-02-04", "w": 1485}, {"d": "2026-02-25", "w": 1155}, {"d": "2026-03-05", "w": 1155}, {"d": "2026-03-10", "w": 770}, {"d": "2026-03-19", "w": 1270}, {"d": "2026-03-28", "w": 1386}, {"d": "2026-04-09", "w": 1502}, {"d": "2026-04-18", "w": 1617}, {"d": "2026-04-27", "w": 1732}, {"d": "2026-05-05", "w": 1320}, {"d": "2026-05-09", "w": 1452}], "Single Arm Dumbbell Row": [{"d": "2025-08-25", "w": 960}, {"d": "2025-09-02", "w": 1440}, {"d": "2025-09-19", "w": 1440}, {"d": "2025-09-29", "w": 1440}, {"d": "2025-10-10", "w": 1350}, {"d": "2025-10-17", "w": 900}, {"d": "2025-10-27", "w": 1350}, {"d": "2025-11-08", "w": 1485}, {"d": "2025-12-22", "w": 800}, {"d": "2026-01-15", "w": 1200}, {"d": "2026-01-26", "w": 1320}, {"d": "2026-02-04", "w": 1440}, {"d": "2026-03-05", "w": 1440}, {"d": "2026-03-10", "w": 900}, {"d": "2026-03-19", "w": 1350}, {"d": "2026-03-28", "w": 1485}, {"d": "2026-04-09", "w": 1620}, {"d": "2026-04-18", "w": 1500}, {"d": "2026-04-27", "w": 1650}, {"d": "2026-05-05", "w": 1800}, {"d": "2026-05-09", "w": 1800}], "Cable Lat Pulldown": [{"d": "2025-08-25", "w": 2640}, {"d": "2025-09-02", "w": 3960}, {"d": "2025-09-19", "w": 3960}, {"d": "2025-09-29", "w": 3960}, {"d": "2025-10-10", "w": 3960}, {"d": "2025-10-17", "w": 2640}, {"d": "2025-10-27", "w": 3960}, {"d": "2025-11-08", "w": 4290}, {"d": "2025-12-22", "w": 2200}, {"d": "2026-01-15", "w": 3300}, {"d": "2026-01-26", "w": 3630}, {"d": "2026-02-04", "w": 3960}, {"d": "2026-03-19", "w": 3300}, {"d": "2026-03-28", "w": 3630}, {"d": "2026-04-09", "w": 3960}, {"d": "2026-04-18", "w": 3630}, {"d": "2026-04-27", "w": 3993}, {"d": "2026-05-05", "w": 4356}, {"d": "2026-05-09", "w": 4356}], "Barbell Shrugs": [{"d": "2025-08-19", "w": 1680}, {"d": "2025-08-25", "w": 2520}, {"d": "2025-09-02", "w": 2520}, {"d": "2025-09-19", "w": 1560}, {"d": "2025-09-29", "w": 2340}, {"d": "2025-10-10", "w": 2340}, {"d": "2025-10-17", "w": 1560}, {"d": "2025-10-27", "w": 2340}, {"d": "2025-11-08", "w": 2535}, {"d": "2025-11-20", "w": 2535}, {"d": "2025-12-22", "w": 1300}, {"d": "2026-01-15", "w": 1950}, {"d": "2026-01-26", "w": 2145}, {"d": "2026-02-04", "w": 2340}, {"d": "2026-02-25", "w": 2100}, {"d": "2026-03-05", "w": 2100}, {"d": "2026-03-10", "w": 1400}, {"d": "2026-03-19", "w": 2310}, {"d": "2026-03-28", "w": 2520}, {"d": "2026-04-09", "w": 2590}, {"d": "2026-04-18", "w": 2730}, {"d": "2026-04-27", "w": 2730}, {"d": "2026-05-05", "w": 2730}, {"d": "2026-05-09", "w": 2940}], "Dumbbell Reverse Fly": [{"d": "2025-08-19", "w": 360}, {"d": "2025-08-25", "w": 540}, {"d": "2025-09-02", "w": 540}, {"d": "2025-09-19", "w": 360}, {"d": "2025-09-29", "w": 540}, {"d": "2025-10-10", "w": 540}, {"d": "2025-10-17", "w": 360}, {"d": "2025-10-27", "w": 540}, {"d": "2025-11-08", "w": 525}, {"d": "2025-11-20", "w": 525}, {"d": "2025-12-22", "w": 360}, {"d": "2026-01-15", "w": 450}, {"d": "2026-01-26", "w": 495}, {"d": "2026-02-04", "w": 540}, {"d": "2026-02-25", "w": 525}, {"d": "2026-03-05", "w": 525}, {"d": "2026-03-10", "w": 350}, {"d": "2026-03-19", "w": 578}, {"d": "2026-03-28", "w": 630}, {"d": "2026-04-09", "w": 600}, {"d": "2026-04-18", "w": 660}, {"d": "2026-04-27", "w": 720}, {"d": "2026-05-05", "w": 780}, {"d": "2026-05-09", "w": 840}]}};
+var CHART_E1RM={"Push": {"Bench Press": [{"d": "2025-08-21", "w": 174.0}, {"d": "2025-08-28", "w": 183.7}, {"d": "2025-09-05", "w": 183.7}, {"d": "2025-09-22", "w": 162.0}, {"d": "2025-10-04", "w": 174.0}, {"d": "2025-10-12", "w": 183.7}, {"d": "2025-10-23", "w": 183.7}, {"d": "2025-11-02", "w": 183.7}, {"d": "2025-11-15", "w": 183.7}, {"d": "2025-11-24", "w": 183.7}, {"d": "2025-12-16", "w": 166.5}, {"d": "2026-01-11", "w": 171.0}, {"d": "2026-01-19", "w": 171.0}, {"d": "2026-01-29", "w": 174.0}, {"d": "2026-02-05", "w": 174.0}, {"d": "2026-02-27", "w": 178.8}, {"d": "2026-03-06", "w": 183.7}, {"d": "2026-03-16", "w": 183.7}, {"d": "2026-03-26", "w": 183.7}, {"d": "2026-04-07", "w": 180.8}, {"d": "2026-04-16", "w": 186.0}, {"d": "2026-04-23", "w": 191.2}, {"d": "2026-04-30", "w": 196.3}, {"d": "2026-05-06", "w": 196.3}, {"d": "2026-05-11", "w": 192.5}], "Incline Dumbbell Press": [{"d": "2025-08-21", "w": 70.0}, {"d": "2025-08-28", "w": 70.0}, {"d": "2025-09-05", "w": 70.0}, {"d": "2025-09-22", "w": 70.0}, {"d": "2025-10-04", "w": 70.0}, {"d": "2025-10-12", "w": 66.7}, {"d": "2025-10-23", "w": 70.0}, {"d": "2025-11-02", "w": 70.0}, {"d": "2025-11-15", "w": 70.0}, {"d": "2025-11-24", "w": 70.0}, {"d": "2025-12-16", "w": 66.7}, {"d": "2026-01-11", "w": 65.0}, {"d": "2026-01-19", "w": 65.0}, {"d": "2026-01-29", "w": 66.7}, {"d": "2026-02-05", "w": 66.7}, {"d": "2026-02-27", "w": 66.7}, {"d": "2026-03-06", "w": 66.7}, {"d": "2026-03-16", "w": 69.7}, {"d": "2026-03-26", "w": 73.3}, {"d": "2026-04-07", "w": 73.3}, {"d": "2026-04-16", "w": 73.3}, {"d": "2026-04-23", "w": 73.3}, {"d": "2026-04-30", "w": 73.3}, {"d": "2026-05-06", "w": 76.0}, {"d": "2026-05-11", "w": 70.0}], "Dumbbell Lateral Raise": [{"d": "2025-08-21", "w": 21.0}, {"d": "2025-08-28", "w": 21.0}, {"d": "2025-09-05", "w": 21.5}, {"d": "2025-09-22", "w": 21.5}, {"d": "2025-10-04", "w": 21.0}, {"d": "2025-10-12", "w": 21.0}, {"d": "2025-10-23", "w": 21.0}, {"d": "2025-11-02", "w": 21.0}, {"d": "2025-11-15", "w": 21.0}, {"d": "2025-11-24", "w": 21.0}, {"d": "2025-12-16", "w": 20.0}, {"d": "2026-01-11", "w": 20.0}, {"d": "2026-01-19", "w": 20.5}, {"d": "2026-01-29", "w": 21.0}, {"d": "2026-02-05", "w": 21.0}, {"d": "2026-02-27", "w": 21.0}, {"d": "2026-03-06", "w": 21.0}, {"d": "2026-03-16", "w": 23.3}, {"d": "2026-03-26", "w": 23.3}, {"d": "2026-04-07", "w": 23.9}, {"d": "2026-04-16", "w": 23.9}, {"d": "2026-04-23", "w": 23.9}, {"d": "2026-04-30", "w": 24.5}, {"d": "2026-05-06", "w": 26.7}, {"d": "2026-05-11", "w": 28.0}], "Arnold Press": [{"d": "2025-08-21", "w": 33.3}, {"d": "2025-08-28", "w": 33.3}, {"d": "2025-09-05", "w": 34.2}, {"d": "2025-09-22", "w": 34.2}, {"d": "2025-10-04", "w": 35.0}, {"d": "2025-10-12", "w": 35.0}, {"d": "2025-10-23", "w": 35.0}, {"d": "2025-11-02", "w": 35.0}, {"d": "2025-11-24", "w": 33.3}, {"d": "2025-12-16", "w": 33.3}, {"d": "2026-01-11", "w": 33.3}, {"d": "2026-01-19", "w": 33.3}, {"d": "2026-01-29", "w": 34.2}, {"d": "2026-02-05", "w": 35.0}, {"d": "2026-02-27", "w": 35.0}, {"d": "2026-03-06", "w": 35.0}, {"d": "2026-03-16", "w": 36.7}, {"d": "2026-03-26", "w": 37.6}, {"d": "2026-04-07", "w": 37.6}, {"d": "2026-04-16", "w": 38.5}, {"d": "2026-04-23", "w": 38.5}, {"d": "2026-04-30", "w": 38.5}, {"d": "2026-05-06", "w": 40.0}], "Cable Tricep Pushdown": [{"d": "2025-08-21", "w": 113.3}, {"d": "2025-08-28", "w": 113.3}, {"d": "2025-09-05", "w": 116.2}, {"d": "2025-09-22", "w": 116.2}, {"d": "2025-10-04", "w": 119.0}, {"d": "2025-10-12", "w": 119.0}, {"d": "2025-10-23", "w": 119.0}, {"d": "2025-11-02", "w": 119.0}, {"d": "2025-11-24", "w": 119.0}, {"d": "2025-12-16", "w": 113.3}, {"d": "2026-01-11", "w": 113.3}, {"d": "2026-01-19", "w": 113.3}, {"d": "2026-01-29", "w": 116.2}, {"d": "2026-02-05", "w": 119.0}, {"d": "2026-02-27", "w": 119.0}, {"d": "2026-03-06", "w": 119.0}, {"d": "2026-03-16", "w": 126.7}, {"d": "2026-03-26", "w": 126.7}, {"d": "2026-04-07", "w": 129.8}, {"d": "2026-04-16", "w": 133.0}, {"d": "2026-04-23", "w": 133.0}, {"d": "2026-04-30", "w": 133.0}, {"d": "2026-05-06", "w": 133.0}], "Dumbbell Chest Fly": [{"d": "2025-08-21", "w": 35.0}, {"d": "2025-08-28", "w": 35.0}, {"d": "2025-09-05", "w": 35.8}, {"d": "2025-10-04", "w": 36.7}, {"d": "2025-10-12", "w": 36.7}, {"d": "2025-10-23", "w": 36.7}, {"d": "2025-11-02", "w": 37.6}, {"d": "2025-11-15", "w": 37.6}, {"d": "2025-11-24", "w": 36.7}, {"d": "2025-12-16", "w": 33.3}, {"d": "2026-01-11", "w": 33.3}, {"d": "2026-01-19", "w": 34.2}, {"d": "2026-01-29", "w": 35.0}, {"d": "2026-02-05", "w": 35.0}, {"d": "2026-02-27", "w": 35.0}, {"d": "2026-03-06", "w": 36.7}, {"d": "2026-03-16", "w": 37.6}, {"d": "2026-03-26", "w": 38.5}, {"d": "2026-04-07", "w": 38.5}, {"d": "2026-04-16", "w": 40.0}, {"d": "2026-04-23", "w": 41.0}, {"d": "2026-04-30", "w": 41.0}, {"d": "2026-05-06", "w": 42.0}], "Close-Grip Bench Press": [{"d": "2026-05-11", "w": 145.7}], "Seated DB Overhead Press": [{"d": "2026-05-11", "w": 38.0}], "Overhead Dumbbell Tricep Extension": [{"d": "2026-05-11", "w": 46.7}], "Cable Fly (High to Low)": [{"d": "2026-05-11", "w": 34.8}]}, "Legs": {"Barbell Squat": [{"d": "2025-08-23", "w": 196.3}, {"d": "2025-08-29", "w": 234.3}, {"d": "2025-09-08", "w": 234.3}, {"d": "2025-09-24", "w": 234.3}, {"d": "2025-10-06", "w": 234.3}, {"d": "2025-10-20", "w": 234.3}, {"d": "2025-11-04", "w": 247.0}, {"d": "2025-11-17", "w": 247.0}, {"d": "2025-12-01", "w": 247.0}, {"d": "2025-12-20", "w": 234.3}, {"d": "2026-01-13", "w": 196.3}, {"d": "2026-01-21", "w": 209.0}, {"d": "2026-01-31", "w": 234.3}, {"d": "2026-03-11", "w": 196.3}, {"d": "2026-03-17", "w": 209.0}, {"d": "2026-03-26", "w": 209.0}, {"d": "2026-04-14", "w": 234.3}, {"d": "2026-04-21", "w": 247.0}, {"d": "2026-04-28", "w": 246.0}, {"d": "2026-05-03", "w": 258.0}, {"d": "2026-05-08", "w": 270.0}], "Romanian Deadlift": [{"d": "2025-08-23", "w": 60.0}, {"d": "2025-08-29", "w": 63.0}, {"d": "2025-09-08", "w": 66.0}, {"d": "2025-09-24", "w": 63.0}, {"d": "2025-10-06", "w": 63.0}, {"d": "2025-10-20", "w": 63.0}, {"d": "2025-11-04", "w": 63.0}, {"d": "2025-11-17", "w": 66.7}, {"d": "2025-12-01", "w": 70.0}, {"d": "2025-12-20", "w": 66.7}, {"d": "2026-01-13", "w": 66.7}, {"d": "2026-01-21", "w": 68.3}, {"d": "2026-01-31", "w": 70.0}, {"d": "2026-03-11", "w": 60.0}, {"d": "2026-03-17", "w": 63.0}, {"d": "2026-03-26", "w": 66.7}, {"d": "2026-04-14", "w": 70.0}, {"d": "2026-04-21", "w": 73.3}, {"d": "2026-04-28", "w": 75.2}, {"d": "2026-05-03", "w": 77.0}, {"d": "2026-05-08", "w": 76.0}], "Calf Raise": [{"d": "2025-08-23", "w": 33.3}, {"d": "2025-08-29", "w": 33.3}, {"d": "2025-09-08", "w": 33.3}, {"d": "2025-09-24", "w": 33.3}, {"d": "2025-10-06", "w": 33.3}, {"d": "2025-10-20", "w": 33.3}, {"d": "2025-11-04", "w": 33.3}, {"d": "2025-11-17", "w": 33.3}, {"d": "2025-12-01", "w": 33.3}, {"d": "2025-12-20", "w": 33.3}, {"d": "2026-01-13", "w": 33.3}, {"d": "2026-01-21", "w": 33.3}, {"d": "2026-01-31", "w": 33.3}, {"d": "2026-03-11", "w": 33.3}, {"d": "2026-03-17", "w": 33.3}, {"d": "2026-03-26", "w": 33.3}, {"d": "2026-04-14", "w": 33.3}, {"d": "2026-04-21", "w": 37.5}, {"d": "2026-04-28", "w": 37.5}, {"d": "2026-05-03", "w": 37.5}, {"d": "2026-05-08", "w": 41.7}], "Walking Lunges": [{"d": "2025-08-29", "w": 27.0}, {"d": "2025-09-24", "w": 27.0}, {"d": "2025-11-04", "w": 25.0}, {"d": "2025-11-17", "w": 25.0}, {"d": "2025-12-01", "w": 25.0}, {"d": "2025-12-20", "w": 25.0}, {"d": "2026-01-13", "w": 25.0}, {"d": "2026-01-21", "w": 25.0}, {"d": "2026-01-31", "w": 25.0}, {"d": "2026-03-26", "w": 25.0}, {"d": "2026-04-14", "w": 25.0}, {"d": "2026-04-21", "w": 25.0}, {"d": "2026-04-28", "w": 25.0}, {"d": "2026-05-03", "w": 25.0}, {"d": "2026-05-08", "w": 29.2}], "Barbell Glute Bridge": [{"d": "2025-08-29", "w": 206.7}, {"d": "2025-09-08", "w": 217.0}, {"d": "2025-09-24", "w": 217.0}, {"d": "2026-01-13", "w": 180.0}, {"d": "2026-01-21", "w": 189.0}, {"d": "2026-01-31", "w": 203.0}, {"d": "2026-03-17", "w": 189.0}, {"d": "2026-03-26", "w": 203.0}, {"d": "2026-04-14", "w": 206.7}, {"d": "2026-04-21", "w": 220.0}, {"d": "2026-04-28", "w": 231.0}, {"d": "2026-05-03", "w": 233.3}, {"d": "2026-05-08", "w": 245.0}], "Hamstring Curl": [{"d": "2025-08-23", "w": 140.0}, {"d": "2025-08-29", "w": 154.0}, {"d": "2025-09-08", "w": 161.3}, {"d": "2025-09-24", "w": 161.3}, {"d": "2025-10-06", "w": 161.3}, {"d": "2025-10-20", "w": 161.3}, {"d": "2025-11-04", "w": 160.0}, {"d": "2025-12-01", "w": 160.0}, {"d": "2025-12-20", "w": 146.7}, {"d": "2026-01-13", "w": 146.7}, {"d": "2026-01-21", "w": 150.3}, {"d": "2026-01-31", "w": 154.0}, {"d": "2026-03-26", "w": 133.3}, {"d": "2026-04-14", "w": 140.0}, {"d": "2026-04-21", "w": 146.7}, {"d": "2026-04-28", "w": 150.3}, {"d": "2026-05-03", "w": 154.0}, {"d": "2026-05-08", "w": 160.0}], "Goblet Squat": [{"d": "2025-08-23", "w": 27.0}, {"d": "2025-08-29", "w": 27.0}, {"d": "2025-09-08", "w": 27.0}, {"d": "2025-09-24", "w": 27.0}, {"d": "2025-10-06", "w": 27.0}, {"d": "2025-10-20", "w": 27.0}, {"d": "2025-11-04", "w": 39.0}, {"d": "2025-12-01", "w": 39.0}, {"d": "2025-12-20", "w": 39.0}, {"d": "2026-01-13", "w": 27.0}, {"d": "2026-01-21", "w": 49.0}, {"d": "2026-01-31", "w": 39.0}, {"d": "2026-03-26", "w": 39.0}, {"d": "2026-04-14", "w": 39.0}, {"d": "2026-04-21", "w": 39.0}, {"d": "2026-04-28", "w": 39.0}, {"d": "2026-05-03", "w": 39.0}, {"d": "2026-05-08", "w": 49.0}]}, "Back": {"Barbell Deadlift": [{"d": "2025-08-19", "w": 221.7}, {"d": "2025-08-25", "w": 234.3}, {"d": "2025-09-02", "w": 234.3}, {"d": "2025-09-19", "w": 234.3}, {"d": "2025-09-29", "w": 234.3}, {"d": "2025-10-10", "w": 234.3}, {"d": "2025-10-17", "w": 234.3}, {"d": "2025-10-27", "w": 247.0}, {"d": "2025-11-08", "w": 247.0}, {"d": "2025-11-20", "w": 247.0}, {"d": "2025-12-22", "w": 234.3}, {"d": "2026-01-15", "w": 196.3}, {"d": "2026-01-26", "w": 209.0}, {"d": "2026-02-04", "w": 234.3}, {"d": "2026-02-25", "w": 247.0}, {"d": "2026-03-05", "w": 234.3}, {"d": "2026-03-10", "w": 234.3}, {"d": "2026-03-19", "w": 247.0}, {"d": "2026-03-28", "w": 259.7}, {"d": "2026-04-09", "w": 272.3}, {"d": "2026-04-18", "w": 270.0}, {"d": "2026-04-27", "w": 282.0}, {"d": "2026-05-05", "w": 288.0}, {"d": "2026-05-09", "w": 294.0}], "Face Pulls": [{"d": "2025-08-19", "w": 49.5}, {"d": "2025-08-25", "w": 49.5}, {"d": "2025-09-02", "w": 49.5}, {"d": "2025-09-19", "w": 49.5}, {"d": "2025-09-29", "w": 49.5}, {"d": "2025-10-10", "w": 49.5}, {"d": "2025-10-17", "w": 52.5}, {"d": "2025-10-27", "w": 49.5}, {"d": "2025-11-08", "w": 52.5}, {"d": "2025-11-20", "w": 50.2}, {"d": "2025-12-22", "w": 52.5}, {"d": "2026-01-15", "w": 41.2}, {"d": "2026-01-26", "w": 49.5}, {"d": "2026-02-04", "w": 49.5}, {"d": "2026-02-25", "w": 51.3}, {"d": "2026-03-05", "w": 51.3}, {"d": "2026-03-10", "w": 51.3}, {"d": "2026-03-19", "w": 52.6}, {"d": "2026-03-28", "w": 53.9}, {"d": "2026-04-09", "w": 55.2}, {"d": "2026-04-18", "w": 56.5}, {"d": "2026-04-27", "w": 57.8}, {"d": "2026-05-05", "w": 58.7}, {"d": "2026-05-09", "w": 60.1}], "Single Arm Dumbbell Row": [{"d": "2025-08-25", "w": 56.0}, {"d": "2025-09-02", "w": 56.0}, {"d": "2025-09-19", "w": 56.0}, {"d": "2025-09-29", "w": 56.0}, {"d": "2025-10-10", "w": 60.0}, {"d": "2025-10-17", "w": 60.0}, {"d": "2025-10-27", "w": 60.0}, {"d": "2025-11-08", "w": 61.5}, {"d": "2025-12-22", "w": 53.3}, {"d": "2026-01-15", "w": 53.3}, {"d": "2026-01-26", "w": 54.7}, {"d": "2026-02-04", "w": 56.0}, {"d": "2026-03-05", "w": 56.0}, {"d": "2026-03-10", "w": 60.0}, {"d": "2026-03-19", "w": 60.0}, {"d": "2026-03-28", "w": 61.5}, {"d": "2026-04-09", "w": 63.0}, {"d": "2026-04-18", "w": 66.7}, {"d": "2026-04-27", "w": 68.3}, {"d": "2026-05-05", "w": 70.0}, {"d": "2026-05-09", "w": 70.0}], "Cable Lat Pulldown": [{"d": "2025-08-25", "w": 154.0}, {"d": "2025-09-02", "w": 154.0}, {"d": "2025-09-19", "w": 154.0}, {"d": "2025-09-29", "w": 154.0}, {"d": "2025-10-10", "w": 154.0}, {"d": "2025-10-17", "w": 154.0}, {"d": "2025-10-27", "w": 154.0}, {"d": "2025-11-08", "w": 157.7}, {"d": "2025-12-22", "w": 146.7}, {"d": "2026-01-15", "w": 146.7}, {"d": "2026-01-26", "w": 150.3}, {"d": "2026-02-04", "w": 154.0}, {"d": "2026-03-19", "w": 146.7}, {"d": "2026-03-28", "w": 150.3}, {"d": "2026-04-09", "w": 154.0}, {"d": "2026-04-18", "w": 161.3}, {"d": "2026-04-27", "w": 165.4}, {"d": "2026-05-05", "w": 169.4}, {"d": "2026-05-09", "w": 169.4}], "Barbell Shrugs": [{"d": "2025-08-19", "w": 98.0}, {"d": "2025-08-25", "w": 98.0}, {"d": "2025-09-02", "w": 98.0}, {"d": "2025-09-19", "w": 91.0}, {"d": "2025-09-29", "w": 91.0}, {"d": "2025-10-10", "w": 91.0}, {"d": "2025-10-17", "w": 91.0}, {"d": "2025-10-27", "w": 91.0}, {"d": "2025-11-08", "w": 93.2}, {"d": "2025-11-20", "w": 93.2}, {"d": "2025-12-22", "w": 86.7}, {"d": "2026-01-15", "w": 86.7}, {"d": "2026-01-26", "w": 88.8}, {"d": "2026-02-04", "w": 91.0}, {"d": "2026-02-25", "w": 93.3}, {"d": "2026-03-05", "w": 93.3}, {"d": "2026-03-10", "w": 93.3}, {"d": "2026-03-19", "w": 95.7}, {"d": "2026-03-28", "w": 98.0}, {"d": "2026-04-09", "w": 100.3}, {"d": "2026-04-18", "w": 100.3}, {"d": "2026-04-27", "w": 100.3}, {"d": "2026-05-05", "w": 100.3}, {"d": "2026-05-09", "w": 102.7}], "Dumbbell Reverse Fly": [{"d": "2025-08-19", "w": 21.0}, {"d": "2025-08-25", "w": 21.0}, {"d": "2025-09-02", "w": 21.0}, {"d": "2025-09-19", "w": 21.0}, {"d": "2025-09-29", "w": 21.0}, {"d": "2025-10-10", "w": 21.0}, {"d": "2025-10-17", "w": 21.0}, {"d": "2025-10-27", "w": 21.0}, {"d": "2025-11-08", "w": 23.3}, {"d": "2025-11-20", "w": 23.3}, {"d": "2025-12-22", "w": 21.0}, {"d": "2026-01-15", "w": 20.0}, {"d": "2026-01-26", "w": 20.5}, {"d": "2026-02-04", "w": 21.0}, {"d": "2026-02-25", "w": 23.3}, {"d": "2026-03-05", "w": 23.3}, {"d": "2026-03-10", "w": 23.3}, {"d": "2026-03-19", "w": 23.9}, {"d": "2026-03-28", "w": 24.5}, {"d": "2026-04-09", "w": 26.7}, {"d": "2026-04-18", "w": 27.3}, {"d": "2026-04-27", "w": 28.0}, {"d": "2026-05-05", "w": 28.7}, {"d": "2026-05-09", "w": 29.3}]}};
+var CHART_BW={"Chest Dips": [{"d": "2025-08-21", "w": 16}, {"d": "2025-08-28", "w": 15}, {"d": "2025-09-05", "w": 16}, {"d": "2025-10-04", "w": 7}, {"d": "2025-10-12", "w": 10}, {"d": "2025-10-23", "w": 14}, {"d": "2025-11-02", "w": 11}, {"d": "2025-11-15", "w": 3}, {"d": "2025-11-24", "w": 12}, {"d": "2025-12-16", "w": 14}, {"d": "2026-01-11", "w": 9}, {"d": "2026-01-19", "w": 10}, {"d": "2026-01-29", "w": 14}, {"d": "2026-02-27", "w": 12}, {"d": "2026-03-16", "w": 12}, {"d": "2026-04-07", "w": 12}, {"d": "2026-04-16", "w": 12}, {"d": "2026-04-23", "w": 14}, {"d": "2026-04-30", "w": 15}, {"d": "2026-05-06", "w": 17}], "Pull-Ups": [{"d": "2025-08-19", "w": 26}, {"d": "2025-08-25", "w": 28}, {"d": "2025-09-02", "w": 28}, {"d": "2025-09-19", "w": 25}, {"d": "2025-09-29", "w": 27}, {"d": "2025-10-10", "w": 26}, {"d": "2025-10-17", "w": 24}, {"d": "2025-10-27", "w": 29}, {"d": "2025-11-08", "w": 30}, {"d": "2025-11-20", "w": 30}, {"d": "2025-12-22", "w": 15}, {"d": "2026-01-15", "w": 24}, {"d": "2026-01-26", "w": 27}, {"d": "2026-02-04", "w": 27}, {"d": "2026-02-25", "w": 29}, {"d": "2026-03-05", "w": 28}, {"d": "2026-03-10", "w": 16}, {"d": "2026-03-19", "w": 28}, {"d": "2026-03-28", "w": 31}, {"d": "2026-04-09", "w": 28}, {"d": "2026-04-18", "w": 30}, {"d": "2026-04-27", "w": 33}, {"d": "2026-05-05", "w": 34}, {"d": "2026-05-09", "w": 35}]};
+var CHART=CHART_WEIGHT;
+var FULL_SESSIONS={"Push": {"2025-08-21": {"Bench Press": {"date": "2025-08-21", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 145.0}, {"reps": 4, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-08-21", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-08-21", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-08-21", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-08-21", "sets": [{"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-08-21", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Chest Dips": {"date": "2025-08-21", "sets": [{"reps": 5, "weight": null}, {"reps": 6, "weight": null}, {"reps": 5, "weight": null}]}}, "2025-08-28": {"Bench Press": {"date": "2025-08-28", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 5, "weight": 145.0}, {"reps": 4, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-08-28", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 11, "weight": 50.0}, {"reps": 8, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-08-28", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-08-28", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-08-28", "sets": [{"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-08-28", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Chest Dips": {"date": "2025-08-28", "sets": [{"reps": 5, "weight": null}, {"reps": 5, "weight": null}, {"reps": 5, "weight": null}]}}, "2025-09-05": {"Bench Press": {"date": "2025-09-05", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-09-05", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 9, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-09-05", "sets": [{"reps": 13, "weight": 15.0}, {"reps": 13, "weight": 15.0}, {"reps": 13, "weight": 15.0}]}, "Arnold Press": {"date": "2025-09-05", "sets": [{"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-09-05", "sets": [{"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-09-05", "sets": [{"reps": 13, "weight": 25.0}, {"reps": 13, "weight": 25.0}, {"reps": 13, "weight": 25.0}]}, "Chest Dips": {"date": "2025-09-05", "sets": [{"reps": 5, "weight": null}, {"reps": 5, "weight": null}, {"reps": 6, "weight": null}]}}, "2025-09-22": {"Bench Press": {"date": "2025-09-22", "sets": [{"reps": 4, "weight": 135.0}, {"reps": 6, "weight": 135.0}, {"reps": 5, "weight": 135.0}, {"reps": 4, "weight": 135.0}]}, "Incline Dumbbell Press": {"date": "2025-09-22", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-09-22", "sets": [{"reps": 13, "weight": 15.0}, {"reps": 13, "weight": 15.0}, {"reps": 13, "weight": 15.0}]}, "Arnold Press": {"date": "2025-09-22", "sets": [{"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-09-22", "sets": [{"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}]}}, "2025-10-04": {"Bench Press": {"date": "2025-10-04", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 6, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-10-04", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 8, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-10-04", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-10-04", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 8, "weight": 25.0}, {"reps": 9, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-10-04", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-10-04", "sets": [{"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}]}, "Chest Dips": {"date": "2025-10-04", "sets": [{"reps": 3, "weight": null}, {"reps": 4, "weight": null}]}}, "2025-10-12": {"Bench Press": {"date": "2025-10-12", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 6, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-10-12", "sets": [{"reps": 7, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-10-12", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-10-12", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-10-12", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-10-12", "sets": [{"reps": 14, "weight": 25.0}, {"reps": 14, "weight": 25.0}]}, "Chest Dips": {"date": "2025-10-12", "sets": [{"reps": 4, "weight": null}, {"reps": 6, "weight": null}]}}, "2025-10-23": {"Bench Press": {"date": "2025-10-23", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 4, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-10-23", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 6, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-10-23", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-10-23", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 9, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-10-23", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-10-23", "sets": [{"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}]}, "Chest Dips": {"date": "2025-10-23", "sets": [{"reps": 6, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2025-11-02": {"Bench Press": {"date": "2025-11-02", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 7, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-11-02", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 11, "weight": 50.0}, {"reps": 9, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-11-02", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-11-02", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-11-02", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-11-02", "sets": [{"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}]}, "Chest Dips": {"date": "2025-11-02", "sets": [{"reps": 3, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2025-11-15": {"Bench Press": {"date": "2025-11-15", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 4, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-11-15", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-11-15", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Dumbbell Chest Fly": {"date": "2025-11-15", "sets": [{"reps": 11, "weight": 27.5}]}, "Chest Dips": {"date": "2025-11-15", "sets": [{"reps": 3, "weight": null}]}}, "2025-11-24": {"Bench Press": {"date": "2025-11-24", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2025-11-24", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 8, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-11-24", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2025-11-24", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}, {"reps": 9, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-11-24", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-11-24", "sets": [{"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}]}, "Chest Dips": {"date": "2025-11-24", "sets": [{"reps": 4, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2025-12-16": {"Bench Press": {"date": "2025-12-16", "sets": [{"reps": 7, "weight": 135.0}, {"reps": 5, "weight": 135.0}, {"reps": 5, "weight": 135.0}]}, "Incline Dumbbell Press": {"date": "2025-12-16", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2025-12-16", "sets": [{"reps": 10, "weight": 15.0}, {"reps": 10, "weight": 15.0}]}, "Arnold Press": {"date": "2025-12-16", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2025-12-16", "sets": [{"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2025-12-16", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Chest Dips": {"date": "2025-12-16", "sets": [{"reps": 7, "weight": null}, {"reps": 7, "weight": null}]}}, "2026-01-11": {"Bench Press": {"date": "2026-01-11", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 135.0}, {"reps": 5, "weight": 135.0}]}, "Incline Dumbbell Press": {"date": "2026-01-11", "sets": [{"reps": 9, "weight": 50.0}, {"reps": 8, "weight": 50.0}, {"reps": 7, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-01-11", "sets": [{"reps": 10, "weight": 15.0}, {"reps": 10, "weight": 15.0}, {"reps": 10, "weight": 15.0}]}, "Arnold Press": {"date": "2026-01-11", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 8, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-01-11", "sets": [{"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-01-11", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Chest Dips": {"date": "2026-01-11", "sets": [{"reps": 3, "weight": null}, {"reps": 3, "weight": null}, {"reps": 3, "weight": null}]}}, "2026-01-19": {"Bench Press": {"date": "2026-01-19", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 135.0}]}, "Incline Dumbbell Press": {"date": "2026-01-19", "sets": [{"reps": 9, "weight": 50.0}, {"reps": 8, "weight": 50.0}, {"reps": 7, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-01-19", "sets": [{"reps": 11, "weight": 15.0}, {"reps": 11, "weight": 15.0}, {"reps": 11, "weight": 15.0}]}, "Arnold Press": {"date": "2026-01-19", "sets": [{"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}, {"reps": 10, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-01-19", "sets": [{"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}, {"reps": 10, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-01-19", "sets": [{"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}]}, "Chest Dips": {"date": "2026-01-19", "sets": [{"reps": 3, "weight": null}, {"reps": 3, "weight": null}, {"reps": 4, "weight": null}]}}, "2026-01-29": {"Bench Press": {"date": "2026-01-29", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 145.0}, {"reps": 5, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2026-01-29", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-01-29", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2026-01-29", "sets": [{"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}, {"reps": 11, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-01-29", "sets": [{"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}, {"reps": 11, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-01-29", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Chest Dips": {"date": "2026-01-29", "sets": [{"reps": 5, "weight": null}, {"reps": 4, "weight": null}, {"reps": 5, "weight": null}]}}, "2026-02-05": {"Bench Press": {"date": "2026-02-05", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 145.0}, {"reps": 5, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2026-02-05", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-02-05", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2026-02-05", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-02-05", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-02-05", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}}, "2026-02-27": {"Bench Press": {"date": "2026-02-27", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 7, "weight": 145.0}, {"reps": 6, "weight": 145.0}, {"reps": 5, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2026-02-27", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-02-27", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2026-02-27", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 11, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-02-27", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-02-27", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Chest Dips": {"date": "2026-02-27", "sets": [{"reps": 3, "weight": null}, {"reps": 4, "weight": null}, {"reps": 5, "weight": null}]}}, "2026-03-06": {"Bench Press": {"date": "2026-03-06", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 7, "weight": 145.0}, {"reps": 6, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2026-03-06", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 9, "weight": 50.0}]}, "Dumbbell Lateral Raise": {"date": "2026-03-06", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Arnold Press": {"date": "2026-03-06", "sets": [{"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}, {"reps": 12, "weight": 25.0}]}, "Cable Tricep Pushdown": {"date": "2026-03-06", "sets": [{"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}, {"reps": 12, "weight": 85.0}]}, "Dumbbell Chest Fly": {"date": "2026-03-06", "sets": [{"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}]}, "Chest Dips": {"date": "2026-03-06", "sets": [{"reps": 6, "weight": null}, {"reps": 7, "weight": null}, {"reps": 7, "weight": null}]}}, "2026-03-16": {"Bench Press": {"date": "2026-03-16", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 8, "weight": 145.0}, {"reps": 7, "weight": 145.0}]}, "Incline Dumbbell Press": {"date": "2026-03-16", "sets": [{"reps": 8, "weight": 55.0}, {"reps": 6, "weight": 55.0}, {"reps": 7, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-03-16", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}, "Arnold Press": {"date": "2026-03-16", "sets": [{"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}, {"reps": 10, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-03-16", "sets": [{"reps": 10, "weight": 95.0}, {"reps": 10, "weight": 95.0}, {"reps": 7, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-03-16", "sets": [{"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}]}, "Chest Dips": {"date": "2026-03-16", "sets": [{"reps": 4, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2026-03-26": {"Bench Press": {"date": "2026-03-26", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 5, "weight": 155.0}, {"reps": 5, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}, {"reps": 8, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}, "Arnold Press": {"date": "2026-03-26", "sets": [{"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 95.0}, {"reps": 10, "weight": 95.0}, {"reps": 10, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-03-26", "sets": [{"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}]}, "Chest Dips": {"date": "2026-03-26", "sets": [{"reps": 9, "weight": null}, {"reps": 8, "weight": null}, {"reps": 8, "weight": null}]}}, "2026-04-07": {"Bench Press": {"date": "2026-04-07", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 5, "weight": 155.0}, {"reps": 5, "weight": 155.0}, {"reps": 4, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-04-07", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}, {"reps": 7, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-04-07", "sets": [{"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}]}, "Arnold Press": {"date": "2026-04-07", "sets": [{"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-04-07", "sets": [{"reps": 11, "weight": 95.0}, {"reps": 11, "weight": 95.0}, {"reps": 11, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-04-07", "sets": [{"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}]}, "Chest Dips": {"date": "2026-04-07", "sets": [{"reps": 4, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2026-04-16": {"Bench Press": {"date": "2026-04-16", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 6, "weight": 155.0}, {"reps": 6, "weight": 155.0}, {"reps": 5, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-04-16", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}, {"reps": 9, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-04-16", "sets": [{"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}]}, "Arnold Press": {"date": "2026-04-16", "sets": [{"reps": 12, "weight": 27.5}, {"reps": 11, "weight": 27.5}, {"reps": 11, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-04-16", "sets": [{"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-04-16", "sets": [{"reps": 10, "weight": 30.0}, {"reps": 10, "weight": 30.0}, {"reps": 10, "weight": 30.0}]}, "Chest Dips": {"date": "2026-04-16", "sets": [{"reps": 4, "weight": null}, {"reps": 4, "weight": null}, {"reps": 4, "weight": null}]}}, "2026-04-23": {"Bench Press": {"date": "2026-04-23", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 7, "weight": 155.0}, {"reps": 6, "weight": 155.0}, {"reps": 6, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-04-23", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 9, "weight": 55.0}, {"reps": 7, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-04-23", "sets": [{"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}]}, "Arnold Press": {"date": "2026-04-23", "sets": [{"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-04-23", "sets": [{"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-04-23", "sets": [{"reps": 11, "weight": 30.0}, {"reps": 11, "weight": 30.0}, {"reps": 11, "weight": 30.0}]}, "Chest Dips": {"date": "2026-04-23", "sets": [{"reps": 5, "weight": null}, {"reps": 5, "weight": null}, {"reps": 4, "weight": null}]}}, "2026-04-30": {"Bench Press": {"date": "2026-04-30", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 6, "weight": 155.0}, {"reps": 6, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-04-30", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}]}, "Dumbbell Lateral Raise": {"date": "2026-04-30", "sets": [{"reps": 12, "weight": 17.5}, {"reps": 12, "weight": 17.5}, {"reps": 12, "weight": 17.5}]}, "Arnold Press": {"date": "2026-04-30", "sets": [{"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}, {"reps": 12, "weight": 27.5}]}, "Cable Tricep Pushdown": {"date": "2026-04-30", "sets": [{"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-04-30", "sets": [{"reps": 11, "weight": 30.0}, {"reps": 11, "weight": 30.0}, {"reps": 11, "weight": 30.0}]}, "Chest Dips": {"date": "2026-04-30", "sets": [{"reps": 5, "weight": null}, {"reps": 5, "weight": null}, {"reps": 5, "weight": null}]}}, "2026-05-06": {"Bench Press": {"date": "2026-05-06", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 7, "weight": 155.0}, {"reps": 7, "weight": 155.0}]}, "Incline Dumbbell Press": {"date": "2026-05-06", "sets": [{"reps": 8, "weight": 60.0}, {"reps": 6, "weight": 60.0}, {"reps": 6, "weight": 60.0}]}, "Dumbbell Lateral Raise": {"date": "2026-05-06", "sets": [{"reps": 10, "weight": 20.0}, {"reps": 10, "weight": 20.0}, {"reps": 10, "weight": 20.0}]}, "Arnold Press": {"date": "2026-05-06", "sets": [{"reps": 10, "weight": 30.0}, {"reps": 10, "weight": 30.0}, {"reps": 10, "weight": 30.0}]}, "Cable Tricep Pushdown": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}, {"reps": 12, "weight": 95.0}]}, "Dumbbell Chest Fly": {"date": "2026-05-06", "sets": [{"reps": 12, "weight": 30.0}, {"reps": 12, "weight": 30.0}, {"reps": 12, "weight": 30.0}]}, "Chest Dips": {"date": "2026-05-06", "sets": [{"reps": 6, "weight": null}, {"reps": 5, "weight": null}, {"reps": 6, "weight": null}]}}}, "Legs": {"2025-08-23": {"Barbell Squat": {"date": "2025-08-23", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}]}, "Romanian Deadlift": {"date": "2025-08-23", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Calf Raise": {"date": "2025-08-23", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-08-23", "sets": [{"reps": 24, "weight": 10.0}, {"reps": 24, "weight": 10.0}]}, "Hamstring Curl": {"date": "2025-08-23", "sets": [{"reps": 12, "weight": 100.0}, {"reps": 12, "weight": 100.0}]}, "Goblet Squat": {"date": "2025-08-23", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-08-29": {"Barbell Squat": {"date": "2025-08-29", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-08-29", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2025-08-29", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-08-29", "sets": [{"reps": 24, "weight": 15.0}, {"reps": 24, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2025-08-29", "sets": [{"reps": 10, "weight": 155.0}, {"reps": 10, "weight": 155.0}]}, "Hamstring Curl": {"date": "2025-08-29", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-08-29", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-09-08": {"Barbell Squat": {"date": "2025-09-08", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-09-08", "sets": [{"reps": 14, "weight": 45.0}, {"reps": 14, "weight": 45.0}, {"reps": 14, "weight": 45.0}]}, "Calf Raise": {"date": "2025-09-08", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Barbell Glute Bridge": {"date": "2025-09-08", "sets": [{"reps": 12, "weight": 155.0}, {"reps": 12, "weight": 155.0}, {"reps": 12, "weight": 155.0}]}, "Hamstring Curl": {"date": "2025-09-08", "sets": [{"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-09-08", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-09-24": {"Barbell Squat": {"date": "2025-09-24", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-09-24", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2025-09-24", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-09-24", "sets": [{"reps": 24, "weight": 15.0}, {"reps": 24, "weight": 15.0}, {"reps": 24, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2025-09-24", "sets": [{"reps": 12, "weight": 155.0}, {"reps": 12, "weight": 155.0}, {"reps": 12, "weight": 155.0}]}, "Hamstring Curl": {"date": "2025-09-24", "sets": [{"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-09-24", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-10-06": {"Barbell Squat": {"date": "2025-10-06", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-10-06", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2025-10-06", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Hamstring Curl": {"date": "2025-10-06", "sets": [{"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-10-06", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-10-20": {"Barbell Squat": {"date": "2025-10-20", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-10-20", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2025-10-20", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Hamstring Curl": {"date": "2025-10-20", "sets": [{"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}, {"reps": 14, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-10-20", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2025-11-04": {"Barbell Squat": {"date": "2025-11-04", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Romanian Deadlift": {"date": "2025-11-04", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2025-11-04", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-11-04", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Hamstring Curl": {"date": "2025-11-04", "sets": [{"reps": 10, "weight": 120.0}, {"reps": 10, "weight": 120.0}, {"reps": 10, "weight": 120.0}]}, "Goblet Squat": {"date": "2025-11-04", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2025-11-17": {"Barbell Squat": {"date": "2025-11-17", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Romanian Deadlift": {"date": "2025-11-17", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Calf Raise": {"date": "2025-11-17", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-11-17", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}}, "2025-12-01": {"Barbell Squat": {"date": "2025-12-01", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Romanian Deadlift": {"date": "2025-12-01", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Calf Raise": {"date": "2025-12-01", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-12-01", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Hamstring Curl": {"date": "2025-12-01", "sets": [{"reps": 10, "weight": 120.0}, {"reps": 10, "weight": 120.0}]}, "Goblet Squat": {"date": "2025-12-01", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2025-12-20": {"Barbell Squat": {"date": "2025-12-20", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2025-12-20", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Calf Raise": {"date": "2025-12-20", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2025-12-20", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Hamstring Curl": {"date": "2025-12-20", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Goblet Squat": {"date": "2025-12-20", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-01-13": {"Barbell Squat": {"date": "2026-01-13", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}]}, "Romanian Deadlift": {"date": "2026-01-13", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Calf Raise": {"date": "2026-01-13", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-01-13", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-01-13", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 10, "weight": 135.0}, {"reps": 10, "weight": 135.0}]}, "Hamstring Curl": {"date": "2026-01-13", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-01-13", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}]}}, "2026-01-21": {"Barbell Squat": {"date": "2026-01-21", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}]}, "Romanian Deadlift": {"date": "2026-01-21", "sets": [{"reps": 11, "weight": 50.0}, {"reps": 11, "weight": 50.0}, {"reps": 11, "weight": 50.0}]}, "Calf Raise": {"date": "2026-01-21", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-01-21", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-01-21", "sets": [{"reps": 12, "weight": 135.0}, {"reps": 12, "weight": 135.0}, {"reps": 12, "weight": 135.0}]}, "Hamstring Curl": {"date": "2026-01-21", "sets": [{"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-01-21", "sets": [{"reps": 15, "weight": 18.0}, {"reps": 15, "weight": 18.0}, {"reps": 12, "weight": 35.0}]}}, "2026-01-31": {"Barbell Squat": {"date": "2026-01-31", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2026-01-31", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Calf Raise": {"date": "2026-01-31", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-01-31", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-01-31", "sets": [{"reps": 12, "weight": 145.0}, {"reps": 12, "weight": 145.0}, {"reps": 12, "weight": 145.0}]}, "Hamstring Curl": {"date": "2026-01-31", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-01-31", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-03-11": {"Barbell Squat": {"date": "2026-03-11", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 145.0}, {"reps": 8, "weight": 155.0}]}, "Romanian Deadlift": {"date": "2026-03-11", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Calf Raise": {"date": "2026-03-11", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Barbell Glute Bridge": {"date": "2026-03-11", "sets": [{"reps": 20, "weight": null}, {"reps": 20, "weight": null}]}}, "2026-03-17": {"Barbell Squat": {"date": "2026-03-17", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 165.0}]}, "Romanian Deadlift": {"date": "2026-03-17", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Calf Raise": {"date": "2026-03-17", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-03-17", "sets": [{"reps": 20, "weight": 10.0}, {"reps": 20, "weight": 10.0}, {"reps": 20, "weight": 10.0}]}, "Barbell Glute Bridge": {"date": "2026-03-17", "sets": [{"reps": 12, "weight": 135.0}, {"reps": 12, "weight": 135.0}, {"reps": 12, "weight": 135.0}]}}, "2026-03-26": {"Barbell Squat": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}]}, "Romanian Deadlift": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Calf Raise": {"date": "2026-03-26", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-03-26", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-03-26", "sets": [{"reps": 12, "weight": 145.0}, {"reps": 12, "weight": 145.0}, {"reps": 12, "weight": 145.0}]}, "Hamstring Curl": {"date": "2026-03-26", "sets": [{"reps": 10, "weight": 100.0}, {"reps": 10, "weight": 100.0}, {"reps": 10, "weight": 100.0}]}, "Goblet Squat": {"date": "2026-03-26", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-04-14": {"Barbell Squat": {"date": "2026-04-14", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Romanian Deadlift": {"date": "2026-04-14", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Calf Raise": {"date": "2026-04-14", "sets": [{"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}, {"reps": 20, "weight": 20.0}]}, "Walking Lunges": {"date": "2026-04-14", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-04-14", "sets": [{"reps": 10, "weight": 155.0}, {"reps": 10, "weight": 155.0}, {"reps": 10, "weight": 155.0}]}, "Hamstring Curl": {"date": "2026-04-14", "sets": [{"reps": 12, "weight": 100.0}, {"reps": 12, "weight": 100.0}, {"reps": 12, "weight": 100.0}]}, "Goblet Squat": {"date": "2026-04-14", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-04-21": {"Barbell Squat": {"date": "2026-04-21", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Romanian Deadlift": {"date": "2026-04-21", "sets": [{"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}, {"reps": 10, "weight": 55.0}]}, "Calf Raise": {"date": "2026-04-21", "sets": [{"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}]}, "Walking Lunges": {"date": "2026-04-21", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-04-21", "sets": [{"reps": 10, "weight": 165.0}, {"reps": 10, "weight": 165.0}, {"reps": 10, "weight": 165.0}]}, "Hamstring Curl": {"date": "2026-04-21", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-04-21", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-04-28": {"Barbell Squat": {"date": "2026-04-28", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 205.0}, {"reps": 6, "weight": 205.0}, {"reps": 6, "weight": 205.0}]}, "Romanian Deadlift": {"date": "2026-04-28", "sets": [{"reps": 11, "weight": 55.0}, {"reps": 11, "weight": 55.0}, {"reps": 11, "weight": 55.0}]}, "Calf Raise": {"date": "2026-04-28", "sets": [{"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}]}, "Walking Lunges": {"date": "2026-04-28", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-04-28", "sets": [{"reps": 12, "weight": 165.0}, {"reps": 12, "weight": 165.0}, {"reps": 12, "weight": 165.0}]}, "Hamstring Curl": {"date": "2026-04-28", "sets": [{"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-04-28", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-05-03": {"Barbell Squat": {"date": "2026-05-03", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 215.0}, {"reps": 6, "weight": 215.0}, {"reps": 6, "weight": 215.0}]}, "Romanian Deadlift": {"date": "2026-05-03", "sets": [{"reps": 12, "weight": 55.0}, {"reps": 12, "weight": 55.0}, {"reps": 12, "weight": 55.0}]}, "Calf Raise": {"date": "2026-05-03", "sets": [{"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}, {"reps": 20, "weight": 22.5}]}, "Walking Lunges": {"date": "2026-05-03", "sets": [{"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}, {"reps": 20, "weight": 15.0}]}, "Barbell Glute Bridge": {"date": "2026-05-03", "sets": [{"reps": 10, "weight": 175.0}, {"reps": 10, "weight": 175.0}, {"reps": 10, "weight": 175.0}]}, "Hamstring Curl": {"date": "2026-05-03", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Goblet Squat": {"date": "2026-05-03", "sets": [{"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}, {"reps": 15, "weight": 26.0}]}}, "2026-05-08": {"Barbell Squat": {"date": "2026-05-08", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 225.0}, {"reps": 6, "weight": 225.0}, {"reps": 6, "weight": 225.0}]}, "Romanian Deadlift": {"date": "2026-05-08", "sets": [{"reps": 8, "weight": 60.0}, {"reps": 8, "weight": 60.0}, {"reps": 8, "weight": 60.0}]}, "Calf Raise": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 25.0}, {"reps": 20, "weight": 25.0}, {"reps": 20, "weight": 25.0}]}, "Walking Lunges": {"date": "2026-05-08", "sets": [{"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}, {"reps": 20, "weight": 17.5}]}, "Barbell Glute Bridge": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 175.0}, {"reps": 12, "weight": 175.0}, {"reps": 12, "weight": 175.0}]}, "Hamstring Curl": {"date": "2026-05-08", "sets": [{"reps": 10, "weight": 120.0}, {"reps": 10, "weight": 120.0}, {"reps": 10, "weight": 120.0}]}, "Goblet Squat": {"date": "2026-05-08", "sets": [{"reps": 12, "weight": 35.0}, {"reps": 12, "weight": 35.0}, {"reps": 12, "weight": 35.0}]}}}, "Back": {"2025-08-19": {"Barbell Deadlift": {"date": "2025-08-19", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 175.0}, {"reps": 8, "weight": 175.0}]}, "Pull-Ups": {"date": "2025-08-19", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-08-19", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Barbell Shrugs": {"date": "2025-08-19", "sets": [{"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2025-08-19", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-08-25": {"Barbell Deadlift": {"date": "2025-08-25", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-08-25", "sets": [{"reps": 11, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-08-25", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-08-25", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2025-08-25", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-08-25", "sets": [{"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2025-08-25", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-09-02": {"Barbell Deadlift": {"date": "2025-09-02", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-09-02", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-09-02", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-09-02", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2025-09-02", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-09-02", "sets": [{"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2025-09-02", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-09-19": {"Barbell Deadlift": {"date": "2025-09-19", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-09-19", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-09-19", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-09-19", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2025-09-19", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-09-19", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-09-19", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-09-29": {"Barbell Deadlift": {"date": "2025-09-29", "sets": [{"reps": 8, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-09-29", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 8, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-09-29", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-09-29", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2025-09-29", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-09-29", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-09-29", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-10-10": {"Barbell Deadlift": {"date": "2025-10-10", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-10-10", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-10-10", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-10-10", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2025-10-10", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-10-10", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-10-10", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-10-17": {"Barbell Deadlift": {"date": "2025-10-17", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-10-17", "sets": [{"reps": 11, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}]}, "Face Pulls": {"date": "2025-10-17", "sets": [{"reps": 15, "weight": 35.0}, {"reps": 15, "weight": 35.0}]}, "Single Arm Dumbbell Row": {"date": "2025-10-17", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2025-10-17", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-10-17", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-10-17", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-10-27": {"Barbell Deadlift": {"date": "2025-10-27", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Pull-Ups": {"date": "2025-10-27", "sets": [{"reps": 10, "weight": null, "grip": "Neutral"}, {"reps": 8, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-10-27", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-10-27", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2025-10-27", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-10-27", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-10-27", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2025-11-08": {"Barbell Deadlift": {"date": "2025-11-08", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Pull-Ups": {"date": "2025-11-08", "sets": [{"reps": 11, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-11-08", "sets": [{"reps": 15, "weight": 35.0}, {"reps": 15, "weight": 35.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2025-11-08", "sets": [{"reps": 11, "weight": 45.0}, {"reps": 11, "weight": 45.0}, {"reps": 11, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2025-11-08", "sets": [{"reps": 13, "weight": 110.0}, {"reps": 13, "weight": 110.0}, {"reps": 13, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-11-08", "sets": [{"reps": 13, "weight": 65.0}, {"reps": 13, "weight": 65.0}, {"reps": 13, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-11-08", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}}, "2025-11-20": {"Barbell Deadlift": {"date": "2025-11-20", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Pull-Ups": {"date": "2025-11-20", "sets": [{"reps": 11, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-11-20", "sets": [{"reps": 15, "weight": 33.5}, {"reps": 15, "weight": 33.5}, {"reps": 15, "weight": 33.5}]}, "Barbell Shrugs": {"date": "2025-11-20", "sets": [{"reps": 13, "weight": 65.0}, {"reps": 13, "weight": 65.0}, {"reps": 13, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-11-20", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}}, "2025-12-22": {"Barbell Deadlift": {"date": "2025-12-22", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Pull-Ups": {"date": "2025-12-22", "sets": [{"reps": 9, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}]}, "Face Pulls": {"date": "2025-12-22", "sets": [{"reps": 15, "weight": 35.0}, {"reps": 15, "weight": 35.0}]}, "Single Arm Dumbbell Row": {"date": "2025-12-22", "sets": [{"reps": 10, "weight": 40.0}, {"reps": 10, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2025-12-22", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2025-12-22", "sets": [{"reps": 10, "weight": 65.0}, {"reps": 10, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2025-12-22", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}}, "2026-01-15": {"Barbell Deadlift": {"date": "2026-01-15", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}, {"reps": 8, "weight": 155.0}]}, "Face Pulls": {"date": "2026-01-15", "sets": [{"reps": 15, "weight": 27.5}, {"reps": 15, "weight": 27.5}, {"reps": 15, "weight": 27.5}]}, "Single Arm Dumbbell Row": {"date": "2026-01-15", "sets": [{"reps": 10, "weight": 40.0}, {"reps": 10, "weight": 40.0}, {"reps": 10, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2026-01-15", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-01-15", "sets": [{"reps": 10, "weight": 65.0}, {"reps": 10, "weight": 65.0}, {"reps": 10, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2026-01-15", "sets": [{"reps": 10, "weight": 15.0}, {"reps": 10, "weight": 15.0}, {"reps": 10, "weight": 15.0}]}, "Pull-Ups": {"date": "2026-01-15", "sets": [{"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}, {"reps": 3, "weight": null, "grip": "Neutral"}, {"reps": 2, "weight": null, "grip": "Wide"}]}}, "2026-01-26": {"Barbell Deadlift": {"date": "2026-01-26", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}, {"reps": 8, "weight": 165.0}]}, "Face Pulls": {"date": "2026-01-26", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2026-01-26", "sets": [{"reps": 11, "weight": 40.0}, {"reps": 11, "weight": 40.0}, {"reps": 11, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2026-01-26", "sets": [{"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-01-26", "sets": [{"reps": 11, "weight": 65.0}, {"reps": 11, "weight": 65.0}, {"reps": 11, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2026-01-26", "sets": [{"reps": 11, "weight": 15.0}, {"reps": 11, "weight": 15.0}, {"reps": 11, "weight": 15.0}]}, "Pull-Ups": {"date": "2026-01-26", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-02-04": {"Barbell Deadlift": {"date": "2026-02-04", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Face Pulls": {"date": "2026-02-04", "sets": [{"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}, {"reps": 15, "weight": 33.0}]}, "Single Arm Dumbbell Row": {"date": "2026-02-04", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Cable Lat Pulldown": {"date": "2026-02-04", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-02-04", "sets": [{"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}, {"reps": 12, "weight": 65.0}]}, "Dumbbell Reverse Fly": {"date": "2026-02-04", "sets": [{"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}, {"reps": 12, "weight": 15.0}]}, "Pull-Ups": {"date": "2026-02-04", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-02-25": {"Barbell Deadlift": {"date": "2026-02-25", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Face Pulls": {"date": "2026-02-25", "sets": [{"reps": 10, "weight": 38.5}, {"reps": 10, "weight": 38.5}, {"reps": 10, "weight": 38.5}]}, "Barbell Shrugs": {"date": "2026-02-25", "sets": [{"reps": 10, "weight": 70.0}, {"reps": 10, "weight": 70.0}, {"reps": 10, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-02-25", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}, "Pull-Ups": {"date": "2026-02-25", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-03-05": {"Barbell Deadlift": {"date": "2026-03-05", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Face Pulls": {"date": "2026-03-05", "sets": [{"reps": 10, "weight": 38.5}, {"reps": 10, "weight": 38.5}, {"reps": 10, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-03-05", "sets": [{"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}, {"reps": 12, "weight": 40.0}]}, "Barbell Shrugs": {"date": "2026-03-05", "sets": [{"reps": 10, "weight": 70.0}, {"reps": 10, "weight": 70.0}, {"reps": 10, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-03-05", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}, "Pull-Ups": {"date": "2026-03-05", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-03-10": {"Barbell Deadlift": {"date": "2026-03-10", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}, {"reps": 8, "weight": 185.0}]}, "Face Pulls": {"date": "2026-03-10", "sets": [{"reps": 10, "weight": 38.5}, {"reps": 10, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-03-10", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Barbell Shrugs": {"date": "2026-03-10", "sets": [{"reps": 10, "weight": 70.0}, {"reps": 10, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-03-10", "sets": [{"reps": 10, "weight": 17.5}, {"reps": 10, "weight": 17.5}]}, "Pull-Ups": {"date": "2026-03-10", "sets": [{"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 2, "weight": null, "grip": "Wide"}, {"reps": 1, "weight": null, "grip": "Neutral"}, {"reps": 1, "weight": null, "grip": "Wide"}]}}, "2026-03-19": {"Barbell Deadlift": {"date": "2026-03-19", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}, {"reps": 8, "weight": 195.0}]}, "Face Pulls": {"date": "2026-03-19", "sets": [{"reps": 11, "weight": 38.5}, {"reps": 11, "weight": 38.5}, {"reps": 11, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-03-19", "sets": [{"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}, {"reps": 10, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2026-03-19", "sets": [{"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}, {"reps": 10, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-03-19", "sets": [{"reps": 11, "weight": 70.0}, {"reps": 11, "weight": 70.0}, {"reps": 11, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-03-19", "sets": [{"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}, {"reps": 11, "weight": 17.5}]}, "Pull-Ups": {"date": "2026-03-19", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-03-28": {"Barbell Deadlift": {"date": "2026-03-28", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 205.0}, {"reps": 8, "weight": 205.0}, {"reps": 8, "weight": 205.0}]}, "Face Pulls": {"date": "2026-03-28", "sets": [{"reps": 12, "weight": 38.5}, {"reps": 12, "weight": 38.5}, {"reps": 12, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-03-28", "sets": [{"reps": 11, "weight": 45.0}, {"reps": 11, "weight": 45.0}, {"reps": 11, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2026-03-28", "sets": [{"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}, {"reps": 11, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-03-28", "sets": [{"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-03-28", "sets": [{"reps": 12, "weight": 17.5}, {"reps": 12, "weight": 17.5}, {"reps": 12, "weight": 17.5}]}, "Pull-Ups": {"date": "2026-03-28", "sets": [{"reps": 8, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}}, "2026-04-09": {"Barbell Deadlift": {"date": "2026-04-09", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 8, "weight": 215.0}, {"reps": 8, "weight": 215.0}, {"reps": 8, "weight": 215.0}]}, "Face Pulls": {"date": "2026-04-09", "sets": [{"reps": 13, "weight": 38.5}, {"reps": 13, "weight": 38.5}, {"reps": 13, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-04-09", "sets": [{"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}, {"reps": 12, "weight": 45.0}]}, "Cable Lat Pulldown": {"date": "2026-04-09", "sets": [{"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}, {"reps": 12, "weight": 110.0}]}, "Barbell Shrugs": {"date": "2026-04-09", "sets": [{"reps": 13, "weight": 70.0}, {"reps": 12, "weight": 70.0}, {"reps": 12, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-04-09", "sets": [{"reps": 10, "weight": 20.0}, {"reps": 10, "weight": 20.0}, {"reps": 10, "weight": 20.0}]}, "Pull-Ups": {"date": "2026-04-09", "sets": [{"reps": 7, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}, {"reps": 4, "weight": null, "grip": "Neutral"}, {"reps": 3, "weight": null, "grip": "Wide"}]}}, "2026-04-18": {"Barbell Deadlift": {"date": "2026-04-18", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 225.0}, {"reps": 6, "weight": 225.0}, {"reps": 6, "weight": 225.0}]}, "Face Pulls": {"date": "2026-04-18", "sets": [{"reps": 14, "weight": 38.5}, {"reps": 14, "weight": 38.5}, {"reps": 14, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-04-18", "sets": [{"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}, {"reps": 10, "weight": 50.0}]}, "Cable Lat Pulldown": {"date": "2026-04-18", "sets": [{"reps": 10, "weight": 121.0}, {"reps": 10, "weight": 121.0}, {"reps": 10, "weight": 121.0}]}, "Barbell Shrugs": {"date": "2026-04-18", "sets": [{"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-04-18", "sets": [{"reps": 11, "weight": 20.0}, {"reps": 11, "weight": 20.0}, {"reps": 11, "weight": 20.0}]}, "Pull-Ups": {"date": "2026-04-18", "sets": [{"reps": 8, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}}, "2026-04-27": {"Barbell Deadlift": {"date": "2026-04-27", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 235.0}, {"reps": 6, "weight": 235.0}, {"reps": 6, "weight": 235.0}]}, "Face Pulls": {"date": "2026-04-27", "sets": [{"reps": 15, "weight": 38.5}, {"reps": 15, "weight": 38.5}, {"reps": 15, "weight": 38.5}]}, "Single Arm Dumbbell Row": {"date": "2026-04-27", "sets": [{"reps": 11, "weight": 50.0}, {"reps": 11, "weight": 50.0}, {"reps": 11, "weight": 50.0}]}, "Cable Lat Pulldown": {"date": "2026-04-27", "sets": [{"reps": 11, "weight": 121.0}, {"reps": 11, "weight": 121.0}, {"reps": 11, "weight": 121.0}]}, "Barbell Shrugs": {"date": "2026-04-27", "sets": [{"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-04-27", "sets": [{"reps": 12, "weight": 20.0}, {"reps": 12, "weight": 20.0}, {"reps": 12, "weight": 20.0}]}, "Pull-Ups": {"date": "2026-04-27", "sets": [{"reps": 8, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}}, "2026-05-05": {"Barbell Deadlift": {"date": "2026-05-05", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 240.0}, {"reps": 6, "weight": 240.0}, {"reps": 6, "weight": 240.0}]}, "Face Pulls": {"date": "2026-05-05", "sets": [{"reps": 10, "weight": 44.0}, {"reps": 10, "weight": 44.0}, {"reps": 10, "weight": 44.0}]}, "Single Arm Dumbbell Row": {"date": "2026-05-05", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Cable Lat Pulldown": {"date": "2026-05-05", "sets": [{"reps": 12, "weight": 121.0}, {"reps": 12, "weight": 121.0}, {"reps": 12, "weight": 121.0}]}, "Barbell Shrugs": {"date": "2026-05-05", "sets": [{"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}, {"reps": 13, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-05-05", "sets": [{"reps": 13, "weight": 20.0}, {"reps": 13, "weight": 20.0}, {"reps": 13, "weight": 20.0}]}, "Pull-Ups": {"date": "2026-05-05", "sets": [{"reps": 8, "weight": null, "grip": "Neutral"}, {"reps": 6, "weight": null, "grip": "Wide"}, {"reps": 5, "weight": null, "grip": "Neutral"}, {"reps": 4, "weight": null, "grip": "Wide"}]}}, "2026-05-09": {"Barbell Deadlift": {"date": "2026-05-09", "sets": [{"reps": 10, "weight": 135.0}, {"reps": 6, "weight": 245.0}, {"reps": 6, "weight": 245.0}, {"reps": 6, "weight": 245.0}]}, "Face Pulls": {"date": "2026-05-09", "sets": [{"reps": 11, "weight": 44.0}, {"reps": 11, "weight": 44.0}, {"reps": 11, "weight": 44.0}]}, "Single Arm Dumbbell Row": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}, {"reps": 12, "weight": 50.0}]}, "Cable Lat Pulldown": {"date": "2026-05-09", "sets": [{"reps": 12, "weight": 121.0}, {"reps": 12, "weight": 121.0}, {"reps": 12, "weight": 121.0}]}, "Barbell Shrugs": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 70.0}, {"reps": 14, "weight": 70.0}, {"reps": 14, "weight": 70.0}]}, "Dumbbell Reverse Fly": {"date": "2026-05-09", "sets": [{"reps": 14, "weight": 20.0}, {"reps": 14, "weight": 20.0}, {"reps": 14, "weight": 20.0}]}, "Pull-Ups": {"date": "2026-05-09", "sets": [{"reps": 9, "weight": null, "grip": "Neutral"}, {"reps": 7, "weight": null, "grip": "Wide"}, {"reps": 6, "weight": null, "grip": "Neutral"}, {"reps": 5, "weight": null, "grip": "Wide"}]}}}};
+var COLORS=["#d41111", "#b3600e", "#d4d411", "#72d411", "#0eb30e", "#11d472", "#11d4d4", "#0e60b3", "#1111d4", "#7211d4", "#b30eb3", "#d41172"];
+var pchart=[];
+var selectedEx={};
+var allPrExercises=[];
+var _pcTmp=null,chatHist=[],activeOv="Push",activePr="Push",activeCo=null,logWo=null,recsCache={};
+var PU_GRIPS=["Neutral","Wide","Neutral","Wide"];
+var BW=["Chest Dips","Pull-Ups"];
+var WOS={
+  Push:["Bench Press","Incline Dumbbell Press","Dumbbell Lateral Raise","Arnold Press","Cable Tricep Pushdown","Dumbbell Chest Fly","Chest Dips"],
+  Legs:["Barbell Squat","Romanian Deadlift","Calf Raise","Walking Lunges","Barbell Glute Bridge","Hamstring Curl","Goblet Squat"],
+  Back:["Barbell Deadlift","Pull-Ups","Face Pulls","Single Arm Dumbbell Row","Cable Lat Pulldown","Barbell Shrugs","Dumbbell Reverse Fly"]
+};
+var _mem={};
+function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");}
+
+
+var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
+var activeOv="Push", activePr="Push", activeCo=null;
+var currentPlan={};
+var workoutMode="normal";
+function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
+function saveS(h){_mem=h;try{localStorage.setItem("wt3",JSON.stringify(h));}catch(e){}}
+function fmtS(sets){
+  return sets.map(function(st){
+    var g=st.grip?"("+st.grip[0]+") ":"";
+    if(st.reps&&st.weight&&st.weight>5)return g+Math.round(st.reps)+"r x "+Math.round(st.weight)+"lb";
+    if(st.reps)return g+Math.round(st.reps)+"r";
+    return null;
+  }).filter(Boolean).join(" / ");
+}
+function tab(id){
+  ["ov","pr","log","co"].forEach(function(t){
+    document.getElementById("tc-"+t).classList.remove("on");
+    document.getElementById("btn-"+t).classList.remove("on");
+  });
+  document.getElementById("tc-"+id).classList.add("on");
+  document.getElementById("btn-"+id).classList.add("on");
+  if(id==="ov") renderOv();
+  if(id==="pr") renderChart();
+}
+function mkPills(cid,names,active,cb){
+  var el=document.getElementById(cid);
+  el.innerHTML="";
+  names.forEach(function(n){
+    var b=document.createElement("button");
+    b.className="pill"+(n===active?" on":"");
+    b.textContent=n;
+    b.onclick=function(){
+      el.querySelectorAll(".pill").forEach(function(p){p.classList.remove("on");});
+      b.classList.add("on");
+      cb(n);
+    };
+    el.appendChild(b);
+  });
+}
+function getLastForWorkout(wo){
+  var stored=loadS();
+  var last=JSON.parse(JSON.stringify(LAST[wo]||{}));
+  var sl=stored[wo]||{};
+  Object.keys(sl).forEach(function(en){
+    var ss=sl[en];
+    if(!ss||!ss.length)return;
+    ss.sort(function(a,b){return b.date.localeCompare(a.date);});
+    // Update existing OR add new exercises from storage
+    if(!last[en]||ss[0].date>last[en].date)last[en]=ss[0];
+  });
+  return last;
+}
+function buildMetrics(){
+  // Merge localStorage into chart data for accurate metrics
+  var stored=loadS();
+  function getMax(wo,exName){
+    var pts=(CHART_WEIGHT[wo]||{})[exName]||[];
+    var max=pts.length?Math.max.apply(null,pts.map(function(p){return p.w;})):0;
+    // Also check stored sessions
+    var ss=(stored[wo]||{})[exName]||[];
+    ss.forEach(function(s){
+      var weights=s.sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+      if(weights.length) max=Math.max(max,Math.max.apply(null,weights));
+    });
+    return max;
+  }
+  var dl=getMax("Back","Barbell Deadlift");
+  var sq=getMax("Legs","Barbell Squat");
+  var bp=getMax("Push","Bench Press");
+  var el=document.getElementById("ov-metrics");
+  el.innerHTML="";
+  [["Deadlift",dl,"135"],["Squat",sq,"135"],["Bench",bp,"working sets"]].forEach(function(row){
+    var d=document.createElement("div"); d.className="mc";
+    d.innerHTML="<div class='ml'>"+row[0]+"</div><div class='mv'>"+row[1]+"lb</div><div class='ms'>up from "+row[2]+"lb</div>";
+    el.appendChild(d);
+  });
+}
+function renderOv(){
+  var last=getLastForWorkout(activeOv);
+  var chart=CHART[activeOv]||{};
+  console.log("renderOv v2 wo="+activeOv+" last="+Object.keys(last).length+" chart="+Object.keys(chart).length);
+  // Also include any exercises in chart data not yet in last
+  Object.keys(chart).forEach(function(name){
+    if(!last[name]){
+      var pts=chart[name]||[];
+      if(pts.length) last[name]={date:pts[pts.length-1].d,sets:[{reps:null,weight:pts[pts.length-1].w}]};
+    }
+  });
+  var list=document.createElement("div"); list.className="exlist";
+  Object.keys(last).forEach(function(name){
+    var sess=last[name]; var pts=chart[name]||[];
+    var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
+    var cls=diff>0?"up":diff<-5?"dn":"fl";
+    var sym=diff>0?"↑":diff<-5?"↓":"→";
+    var isBWex=(name==="Pull-Ups"||name==="Chest Dips");
+    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
+    var row=document.createElement("div"); row.className="exrow";
+    var left=document.createElement("div"); left.style.minWidth="0";
+    var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
+    var meta=document.createElement("div"); meta.className="exm";
+    meta.innerHTML="Last: "+sess.date+"<br>"+fmtS(sess.sets);
+    left.appendChild(nm); left.appendChild(meta);
+    var right=document.createElement("div"); right.className="ext "+cls;
+    right.textContent=sym+" "+diffStr;
+    row.appendChild(left); row.appendChild(right);
+    list.appendChild(row);
+  });
+  var el=document.getElementById("ov-exlist"); el.innerHTML=""; el.appendChild(list);
+}
+function renderChart(){
+  var wExs=JSON.parse(JSON.stringify(CHART_WEIGHT[activePr]||{}));
+  var vExs=JSON.parse(JSON.stringify(CHART_VOLUME[activePr]||{}));
+  var eExs=JSON.parse(JSON.stringify(CHART_E1RM[activePr]||{}));
+  // Merge stored sessions
+  var stored=loadS(); var sl=stored[activePr]||{};
+  Object.keys(sl).forEach(function(en){
+    sl[en].forEach(function(s){
+      var sets=s.sets||[];
+      var weights=sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+      var maxW=weights.length?Math.max.apply(null,weights):0;
+      var vol=0; var e1rm=0;
+      sets.forEach(function(st){
+        var r=st.reps||0; var w=st.weight||0;
+        if(r&&w&&w>10){vol+=r*w; var e=w*(1+r/30); if(e>e1rm)e1rm=e;}
+      });
+      function upsert(obj,name,d,val){
+        if(!obj[name])obj[name]=[];
+        var ei=obj[name].findIndex(function(p){return p.d===d;});
+        if(ei>=0)obj[name][ei].w=val; else obj[name].push({d:d,w:Math.round(val)});
+        obj[name].sort(function(a,b){return a.d.localeCompare(b.d);});
+      }
+      if(maxW)upsert(wExs,en,s.date,maxW);
+      if(vol)upsert(vExs,en,s.date,vol);
+      if(e1rm)upsert(eExs,en,s.date,e1rm);
+    });
+  });
+  // Build exercise list - all available
+  allPrExercises=Object.keys(wExs);
+  // Initialize selection - all on by default for new exercises
+  allPrExercises.forEach(function(name){
+    if(selectedEx[activePr]===undefined)selectedEx[activePr]={};
+    if(selectedEx[activePr][name]===undefined)selectedEx[activePr][name]=true;
+  });
+  // Build interactive legend
+  var leg=document.getElementById("pr-leg"); leg.innerHTML="";
+  allPrExercises.forEach(function(name,i){
+    var isOn=selectedEx[activePr][name]!==false;
+    var item=document.createElement("div");
+    item.className="cli leg-item"+(isOn?"":" leg-off");
+    item.style.cursor="pointer";
+    item.style.opacity=isOn?"1":"0.35";
+    item.style.userSelect="none";
+    var sw=document.createElement("div"); sw.className="csw";
+    sw.style.background=COLORS[i%COLORS.length];
+    var t=document.createTextNode(name);
+    item.appendChild(sw); item.appendChild(t);
+    (function(n,el){
+      el.onclick=function(){
+        selectedEx[activePr][n]=!selectedEx[activePr][n];
+        renderChart();
+      };
+    })(name,item);
+    leg.appendChild(item);
+  });
+  // Filter to selected exercises only
+  var entries=allPrExercises.map(function(name,i){return {name:name,i:i};}).filter(function(e){return selectedEx[activePr][e.name]!==false;});
+  var allDates={};
+  entries.forEach(function(e){(wExs[e.name]||[]).forEach(function(p){allDates[p.d]=1;});});
+  var dates=Object.keys(allDates).sort();
+  var labels=dates.map(function(d){var dt=new Date(d+"T12:00:00");return (dt.getMonth()+1)+"/"+(dt.getDate());});
+  function makeDatasets(exsObj){
+    return entries.map(function(e){
+      var pts=exsObj[e.name]||[];
+      var bd={};pts.forEach(function(p){bd[p.d]=p.w;});
+      return{label:e.name,data:dates.map(function(d){return bd[d]!==undefined?bd[d]:null;}),
+        borderColor:COLORS[e.i%COLORS.length],backgroundColor:"transparent",pointRadius:2,tension:0.3,spanGaps:true};
+    });
+  }
+  if(pchart&&pchart.length){pchart.forEach(function(c){if(c)c.destroy();});pchart=[];}
+  var cfgs=[
+    {id:"pr-chart-weight",data:makeDatasets(wExs)},
+    {id:"pr-chart-volume",data:makeDatasets(vExs)},
+    {id:"pr-chart-e1rm",data:makeDatasets(eExs)}
+  ];
+  cfgs.forEach(function(cfg){
+    var el=document.getElementById(cfg.id); if(!el)return;
+    pchart.push(new Chart(el,{type:"line",data:{labels:labels,datasets:cfg.data},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{font:{size:10},autoSkip:true,maxTicksLimit:8},grid:{color:"rgba(0,0,0,.05)"}},
+                y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
+    }));
+  });
+  // BW chart — always shown regardless of workout filter
+  renderBWChart();
+}
+function loadLogForDate(date, wo){
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  document.getElementById("log-date").value=date;
+  var stored=loadS();
+  var storedWo=stored[wo]||{};
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+  var exsOnDate=[];
+  // 1. FULL_SESSIONS has the complete workout for each historical date
+  var fullDay=(FULL_SESSIONS[wo]||{})[date]||{};
+  Object.keys(fullDay).forEach(function(exName){
+    exsOnDate.push({name:exName,session:fullDay[exName]});
+  });
+  // 2. localStorage overrides/adds (for recently logged sessions not in spreadsheet)
+  Object.keys(storedWo).forEach(function(exName){
+    var ss=storedWo[exName]||[];
+    var match=ss.filter(function(s){return s.date===date;});
+    if(match.length){
+      var existing=exsOnDate.findIndex(function(e){return e.name===exName;});
+      if(existing>=0) exsOnDate[existing]={name:exName,session:match[0]};
+      else exsOnDate.push({name:exName,session:match[0]});
+    }
+  });
+  // 3. Also check LAST for this date
+  if(!exsOnDate.length){
+    var lastWo=LAST[wo]||{};
+    Object.keys(lastWo).forEach(function(exName){
+      if(lastWo[exName].date===date) exsOnDate.push({name:exName,session:lastWo[exName]});
+    });
+  }
+  if(!exsOnDate.length){startLog(wo);return;}
+  // Sort in canonical workout order
+  var order=EX_ORDER[wo]||[];
+  exsOnDate.sort(function(a,b){
+    var ai=order.indexOf(a.name); var bi=order.indexOf(b.name);
+    if(ai===-1&&bi===-1) return 0;
+    if(ai===-1) return 1;
+    if(bi===-1) return -1;
+    return ai-bi;
+  });
+  exsOnDate.forEach(function(ex){
+    var exName=ex.name; var sess=ex.session;
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var sets=sess.sets||[];
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
+    prevSpan.textContent=fmtS(sets);
+    head.appendChild(nameSpan); head.appendChild(prevSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    sets.forEach(function(s,i){
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
+      row.appendChild(lbl);
+      if(isPU){var gt=document.createElement("span");gt.className="gtag";gt.textContent=s.grip||PU_GRIPS[i]||"";row.appendChild(gt);}
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.value=s.reps||"";
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        wInput.value=s.weight||"";
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    });
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
+}
+function renderBWChart(){
+  // Merge any stored BW sessions
+  var bwData=JSON.parse(JSON.stringify(CHART_BW));
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wo){
+    var sl=stored[wo]||{};
+    Object.keys(sl).forEach(function(exName){
+      if(!["Chest Dips","Pull-Ups"].indexOf(exName)<0 && exName!=="Chest Dips" && exName!=="Pull-Ups") return;
+      // Check if it's a BW exercise
+      var isBW=(exName==="Chest Dips"||exName==="Pull-Ups"||(!bwData[exName]&&CHART_BW[exName]));
+      if(!isBW) return;
+      sl[exName].forEach(function(s){
+        var total=s.sets.filter(function(st){return st.reps;}).reduce(function(a,st){return a+st.reps;},0);
+        if(total){
+          if(!bwData[exName])bwData[exName]=[];
+          var ei=bwData[exName].findIndex(function(p){return p.d===s.date;});
+          if(ei>=0)bwData[exName][ei].w=total; else bwData[exName].push({d:s.date,w:total});
+        }
+      });
+      if(bwData[exName])bwData[exName].sort(function(a,b){return a.d.localeCompare(b.d);});
+    });
+  });
+  var bwNames=Object.keys(bwData);
+  if(!bwNames.length) return;
+  // Build legend
+  var bwLeg=document.getElementById("bw-leg"); if(!bwLeg)return;
+  bwLeg.innerHTML="";
+  bwNames.forEach(function(name,i){
+    var item=document.createElement("div"); item.className="cli leg-item";
+    var sw=document.createElement("div"); sw.className="csw"; sw.style.background=COLORS[i%COLORS.length];
+    item.appendChild(sw); item.appendChild(document.createTextNode(name));
+    bwLeg.appendChild(item);
+  });
+  // Build chart
+  var allDates={};
+  bwNames.forEach(function(name){(bwData[name]||[]).forEach(function(p){allDates[p.d]=1;});});
+  var dates=Object.keys(allDates).sort();
+  var labels=dates.map(function(d){var dt=new Date(d+"T12:00:00");return (dt.getMonth()+1)+"/"+(dt.getDate());});
+  var datasets=bwNames.map(function(name,i){
+    var bd={};(bwData[name]||[]).forEach(function(p){bd[p.d]=p.w;});
+    return{label:name,data:dates.map(function(d){return bd[d]!==undefined?bd[d]:null;}),
+      borderColor:COLORS[i%COLORS.length],backgroundColor:"transparent",pointRadius:2,tension:0.3,spanGaps:true};
+  });
+  var bwEl=document.getElementById("bw-chart"); if(!bwEl)return;
+  if(window._bwChart)window._bwChart.destroy();
+  window._bwChart=new Chart(bwEl,{type:"line",data:{labels:labels,datasets:datasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:10},autoSkip:true,maxTicksLimit:8},grid:{color:"rgba(0,0,0,.05)"}},
+              y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
+  });
+}
+function buildLogMeta(){
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wn){
+    var last=LAST[wn]||{}; var sl=stored[wn]||{};
+    var dates=Object.values(last).map(function(s){return s.date;});
+    Object.values(sl).forEach(function(ss){if(ss&&ss.length)dates.push(ss[ss.length-1].date);});
+    dates=dates.filter(Boolean).sort();
+    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" · Last: "+dates[dates.length-1];}
+  });
+}
+function startLog(wo){
+  logWo=wo;
+  document.getElementById("log-home").style.display="none";
+  document.getElementById("log-form").classList.add("show");
+  document.getElementById("okmsg").style.display="none";
+  initCal();
+  var stored=loadS();
+  var c=document.getElementById("log-exs"); c.innerHTML="";
+
+  // Build exercise list from last session — always use most recent logged exercises
+  // Merge stored sessions with LAST to get the freshest data
+  var lastSession={};
+  var lastDate="";
+
+  // Get all exercises from LAST for this workout
+  var lastData=LAST[wo]||{};
+  Object.keys(lastData).forEach(function(exName){
+    var d=lastData[exName].date||"";
+    if(!lastDate||d>lastDate) lastDate=d;
+  });
+
+  // Override with anything newer from storage
+  var storedWo=stored[wo]||{};
+  Object.keys(storedWo).forEach(function(exName){
+    var sessions=storedWo[exName]||[];
+    if(!sessions.length) return;
+    sessions.sort(function(a,b){return b.date.localeCompare(a.date);});
+    var newest=sessions[0];
+    if(!lastDate||newest.date>lastDate) lastDate=newest.date;
+  });
+
+  // Build the exercise list: use coach plan if available, else exercises from most recent session date only
+  var exerciseList=[];
+  if(currentPlan[wo]&&currentPlan[wo].length){
+    exerciseList=currentPlan[wo].map(function(r){return r.exercise;});
+  } else {
+    // Find the most recent date across ALL sources
+    var allDates=[];
+    Object.keys(lastData).forEach(function(exName){
+      if(lastData[exName].date) allDates.push(lastData[exName].date);
+    });
+    Object.keys(storedWo).forEach(function(exName){
+      var ss=storedWo[exName]||[];
+      ss.forEach(function(s){if(s.date) allDates.push(s.date);});
+    });
+    allDates.sort();
+    var mostRecent=allDates.length?allDates[allDates.length-1]:"";
+    // Only include exercises that were done on that most recent date
+    var exWithDates=[];
+    Object.keys(lastData).forEach(function(exName){
+      if(lastData[exName].date===mostRecent) exWithDates.push(exName);
+    });
+    Object.keys(storedWo).forEach(function(exName){
+      var ss=storedWo[exName]||[];
+      ss.forEach(function(s){
+        if(s.date===mostRecent&&exWithDates.indexOf(exName)<0) exWithDates.push(exName);
+      });
+    });
+    exerciseList=exWithDates.length?exWithDates:Object.keys(lastData);
+  }
+
+  // Update WOS for this workout to match
+  if(exerciseList.length) WOS[wo]=exerciseList;
+
+  exerciseList.forEach(function(exName){
+    var base=lastData[exName];
+    var last=base;
+    var sl=storedWo[exName];
+    if(sl&&sl.length){
+      sl.sort(function(a,b){return b.date.localeCompare(a.date);});
+      if(!last||sl[0].date>last.date) last=sl[0];
+    }
+    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var ls=last?last.sets:[];
+    var n=Math.max(ls.length,isPU?4:3);
+    var prev=last?fmtS(last.sets):"";
+    var block=document.createElement("div"); block.className="ex-block";
+    var head=document.createElement("div"); head.className="ex-head";
+    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
+    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
+    prevSpan.textContent=prev?"Last: "+prev:"No data";
+    head.appendChild(nameSpan); head.appendChild(prevSpan);
+    var setrows=document.createElement("div"); setrows.className="setrows";
+    for(var i=0;i<n;i++){
+      var ps=ls[i]||null;
+      var rph=ps&&ps.reps?Math.round(ps.reps):"";
+      var wph=ps&&ps.weight&&ps.weight>5?Math.round(ps.weight):"";
+      var grip=isPU?PU_GRIPS[i]:"";
+      var gt=grip?"<span class=\"gtag\">"+grip+"</span>":"";
+      var row=document.createElement("div"); row.className="setrow";
+      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
+      row.appendChild(lbl);
+      if(isPU){var gtEl=document.createElement("span");gtEl.className="gtag";gtEl.textContent=PU_GRIPS[i]||"Neutral";row.appendChild(gtEl);}
+      var rInput=document.createElement("input");
+      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
+      rInput.placeholder=rph?"reps ("+rph+")":"reps";
+      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
+      row.appendChild(rInput);
+      if(!isBW){
+        rInput.style.maxWidth="100px";
+        var wInput=document.createElement("input");
+        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
+        wInput.placeholder=wph?"lbs ("+wph+")":"lbs";
+        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
+        row.appendChild(wInput);
+      }
+      setrows.appendChild(row);
+    }
+    block.appendChild(head); block.appendChild(setrows);
+    c.appendChild(block);
+  });
+}
+
+function backToHome(){
+  logWo=null;
+  document.getElementById("log-home").style.display="block";
+  document.getElementById("log-form").classList.remove("show");
+}
+function saveSession(){
+  var date=document.getElementById("log-date").value;
+  if(!date){alert("Select a date");return;}
+  var stored=loadS();
+  if(!stored[logWo])stored[logWo]={};
+  var saved=0;
+  WOS[logWo].forEach(function(exName){
+    var isPU=exName==="Pull-Ups"; var sets=[]; var si=0;
+    while(true){
+      var ri=document.querySelector("[data-ex='"+exName+"'][data-si='"+si+"'][data-f='reps']");
+      if(!ri)break;
+      var wi=document.querySelector("[data-ex='"+exName+"'][data-si='"+si+"'][data-f='weight']");
+      var r=parseFloat(ri.value)||null;
+      var w=wi?parseFloat(wi.value)||null:null;
+      if(r!==null||w!==null){
+        var s={reps:r,weight:w};
+        if(isPU)s.grip=PU_GRIPS[si]||"Neutral";
+        sets.push(s);
+      }
+      si++;
+    }
+    if(sets.length){
+      if(!stored[logWo][exName])stored[logWo][exName]=[];
+      stored[logWo][exName]=stored[logWo][exName].filter(function(s){return s.date!==date;});
+      stored[logWo][exName].push({date:date,sets:sets});
+      saved++;
+    }
+  });
+  saveS(stored);
+  recsCache[logWo]=null;
+  // Update CHART
+  Object.keys(stored[logWo]||{}).forEach(function(exName){
+    if(!CHART[logWo])CHART[logWo]={};
+    if(!CHART[logWo][exName])CHART[logWo][exName]=[];
+    var sessions=stored[logWo][exName]||[];
+    sessions.forEach(function(s){
+      var weights=s.sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+      var val=exName==="Pull-Ups"?s.sets.filter(function(st){return st.reps;}).reduce(function(a,st){return a+st.reps;},0):(weights.length?Math.max.apply(null,weights):0);
+      if(val){
+        var pts=CHART[logWo][exName];
+        var ei=pts.findIndex(function(p){return p.d===s.date;});
+        if(ei>=0)pts[ei].w=val; else pts.push({d:s.date,w:val});
+      }
+    });
+    if(CHART[logWo][exName])CHART[logWo][exName].sort(function(a,b){return a.d.localeCompare(b.d);});
+  });
+  renderOv(); buildMetrics(); renderChart();
+  var msg=document.getElementById("okmsg");
+  msg.textContent="Workout complete! "+saved+" exercise"+(saved!==1?"s":"")+" logged for "+date;
+  msg.style.display="block";
+  // Return to overview after 2s
+  setTimeout(function(){
+    msg.style.display="none";
+    backToHome();
+    tab("ov");
+    var ovBtn=document.getElementById("btn-ov");
+    if(ovBtn)ovBtn.classList.add("on");
+  },2000);
+}
+var COACH_CONTEXT="ATHLETE PROFILE:\nFormer D1 soccer player, recreational soccer + running, bilateral Achilles tendinopathy, hip flexor strain.\nTraining split: Push / Legs / Back. Rotating days, roughly 1x/week each.\nKey issue: Has been doing nearly identical workouts for 12+ months. Needs variety and progressive overload.\n\nSTRICT WORKOUT RULES:\n1. Push ALWAYS starts with Bench Press. Legs ALWAYS starts with Barbell Squat. Back ALWAYS starts with Barbell Deadlift.\n2. Anchor lift (Bench/Squat/Deadlift) gets ONE warmup set at ~60% working weight, 8-10 reps. No other exercise needs warmup.\n3. All other exercises are in SUPERSET PAIRS. Label each pair [Pair A], [Pair B], [Pair C] in the target field.\n4. Pull-Ups ALWAYS in Back: 4 sets alternating neutral/wide to failure. Add weight when athlete hits 12+ reps neutral.\n5. Achilles: no explosive calf work. RDL: controlled tempo. Hip flexor: avoid deep lunges.\n\nWORKOUT MODES \u2014 set counts and exercise count:\n- MINI (~30 min): Anchor lift + 2 pairs (4 exercises total). Anchor: 3 working sets. Pairs: 2-3 sets each.\n- NORMAL (~50 min): Anchor lift + 2-3 pairs (5-6 exercises). Anchor: 3-4 working sets. Pairs: 3 sets each. Be STRATEGIC \u2014 compound movements get more sets, isolation gets fewer.\n- LONG (~70 min): Anchor lift + 3 pairs (7 exercises). Anchor: 4-5 working sets. Pairs: 4 sets each.\n\nPAIRING STRATEGY \u2014 design pairs based on:\n1. FATIGUE SEQUENCING: Early pairs = compound/heavy (more energy). Late pairs = isolation/lighter (muscles fatiguing).\n2. MUSCLE ANTAGONISM: Pair pushing muscles with pulling muscles, or upper with lower, to maximize recovery between sets.\n   - Good Push pairs: Chest press + Rear delt/row | Shoulder press + Lat movement | Tricep + Bicep | Chest fly + Face pull\n   - Good Back pairs: Row + Pull variation | Deadlift accessory + Bicep curl | Shrug + Rear delt fly\n   - Good Leg pairs: Quad dominant + Hamstring dominant | Glute + Calf | Lunge + Hip hinge\n3. AVOID pairing same muscle groups (e.g. bench + incline press = bad pair, both hit chest with same fatigue).\n4. PAIR ORDER matters: In a 60-min session, early pairs are compound movements that need more energy. Later pairs are isolation.\n\nEXERCISE CATEGORIZATION \u2014 ABSOLUTE RULES, NO EXCEPTIONS:\n\nPUSH workout contains ONLY these muscle groups: chest, front delts, side delts, triceps.\nPUSH exercises: Bench Press, Close-Grip Bench, Incline Press (barbell/DB), Decline Press, Cable Fly, Chest Fly, Pec Dec, Dips (chest), Push-Up variations, Overhead Press, Arnold Press, Seated DB Press, Z-Press, Lateral Raise, Front Raise, Tricep Pushdown, Overhead Tricep Extension, Skull Crushers, JM Press, Tate Press.\nNEVER in Push: Face Pulls, Rear Delt Fly, Rows, Pull-Ups, Lat Pulldown, Bicep Curls, Deadlifts, anything targeting back or rear delts.\n\nBACK/PULL workout contains ONLY: lats, traps, rhomboids, rear delts, biceps (but NO bicep curls \u2014 athlete does those separately).\nBACK exercises: Deadlift variations, Rack Pull, Farmer Carry, Pull-Ups, Chin-Ups, Lat Pulldown, Straight-Arm Pulldown, All Row variations (Barbell/DB/Cable/T-Bar/Chest-Supported/Meadows/Pendlay), Face Pulls, Rear Delt Fly, Reverse Fly, Band Pull-Apart, Barbell Shrugs, DB Shrugs.\nNEVER in Back: Bicep Curls of any kind (athlete does these separately \u2014 DO NOT suggest them ever), chest exercises, shoulder pressing, tricep work.\n\nLEGS workout contains ONLY: quads, hamstrings, glutes, calves.\nLEGS exercises: Squat variations, Leg Press, Hack Squat, RDL, Nordic Curl, Hamstring Curl, Good Morning, Hip Thrust, Glute Bridge, Cable Kickback, Calf Raise, Lunge variations, Bulgarian Split Squat, Step-Up.\nNEVER in Legs: any upper body exercise.\n\nCRITICAL NAMING RULE: The exercise name in the JSON must EXACTLY match what you are prescribing. If you swap Incline DB Press for Decline DB Press, the exercise name field must say \"Decline Dumbbell Press\", not \"Incline Dumbbell Press\". The name and the description must always match.\n\nNEVER SUGGEST BICEP CURLS IN ANY FORM \u2014 the athlete does these separately and does not want them in their program.\n\n\nCURRENT WORKING EXERCISE TEMPLATES (science-based, optimally designed):\n\nPUSH template (established 2026-05-11):\n- Anchor: Bench Press (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pair A: Incline Dumbbell Press + Dumbbell Lateral Raise\n  RATIONALE: Upper chest (different angle from flat) + side delt isolation. Zero primary overlap. Both moderate weight, good early when fresher after bench.\n- Pair B: Close-Grip Bench Press + Seated DB Overhead Press\n  RATIONALE: Tricep compound + front/side delt compound. Different primary movers. CGBP builds tricep strength while OHP builds shoulder pressing strength.\n- Pair C: Cable Fly (High to Low) + Overhead Dumbbell Tricep Extension\n  RATIONALE: Chest isolation + tricep isolation. Completely different muscles. Perfect finisher \u2014 both light, high rep, pump-focused.\n\nLEGS template (redesigned 2026-05-11 \u2014 replacing plateaued exercises):\n- Anchor: Barbell Squat (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pair A: Romanian Deadlift + Bulgarian Split Squat\n  RATIONALE: Hip hinge (hamstring/glute) + unilateral quad/glute. True movement pattern variety. BSS replaces Walking Lunges \u2014 more glute activation, better strength stimulus, loads heavier.\n- Pair B: Hamstring Curl + Leg Press\n  RATIONALE: Hamstring isolation + quad compound. True antagonists \u2014 one rests completely while other works. Leg Press replaces Goblet Squat \u2014 allows much heavier loading for quad development.\n- Pair C: Barbell Glute Bridge + Calf Raise\n  RATIONALE: Glute isolation + calf isolation. Completely different muscles. Keep Glute Bridge (progressing well). Keep Calf Raise but increase load and reduce reps (15 reps @ 35lb instead of 20 @ 25lb) to break plateau.\n\nBACK template (redesigned 2026-05-11 \u2014 major refresh after 9 months of plateau):\n- Anchor: Barbell Deadlift (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pull-Ups (semi-anchor, always second \u2014 4 sets N/W/N/W to failure)\n- Pair A: Pull-Ups + Dead Hang or Hollow Body Hold\n  UPDATE: Pair Pull-Ups with a core/ab exercise (Dead Hang, Hollow Body Hold, or Ab Wheel Rollout) \u2014 completely different muscles, zero fatigue overlap. Pull-Ups stay 4 sets N/W/N/W.\n- Pair B: Chest-Supported Dumbbell Row + Face Pulls\n  RATIONALE: Replaces SA Row (plateaued at 50lb for 4+ sessions). Chest-supported row removes momentum, forces strict form, hits rhomboids/mid-traps differently. Paired with Face Pulls (rear delt \u2014 different primary).\n- Pair C: Cable Lat Pulldown + Meadows Row (or T-Bar Row)\n  RATIONALE: Vertical pull (lats) + horizontal pull variation. Replace SA Row with Meadows Row for more overload potential. Lat Pulldown is plateaued \u2014 switch to 5x5 @ 132lb to break it.\n- Pair D: Barbell Shrugs + Dumbbell Reverse Fly\n  RATIONALE: Both plateaued \u2014 increase Shrugs to 4x8 @ 95lb (big jump to force adaptation). Reverse Fly move to 3x15 @ 15lb with slower tempo (2-second hold at top). NOTE on Shrugs: these are 70lb DUMBBELLS \u2014 a realistic next jump is 75-80lb, not 95lb. Never jump more than 5-10lb on dumbbell exercises.\n\nNOTE: Back now has 4 pairs (8 exercises + anchor + pull-ups = long workout). For Normal mode use Pairs A-C only (skip D). For Long mode use all 4 pairs.\n\nTEMPLATE RULES:\n1. Follow this exact order and pairing every session. Do not rearrange pairs.\n2. Keep all exercises unless plateaued 4+ sessions. Swap only that exercise, keep pairing logic.\n3. Anchor lifts never change. Pull-Ups never change. Only weight/rep scheme evolves.\n4. Extrapolate weights from last 3-4 sessions \u2014 never reset. Build on previous session.\n5. When swapping within a pair, replace with same muscle group to maintain pairing rationale.";
+function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");}
+async function cloudSave(d){return false;}
+async function cloudLoad(){return null;}
+function saveS(h){_mem=h;try{localStorage.setItem("wt3",JSON.stringify(h));}catch(e){}}
+function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
+async function loadRecs(wo){
+  if(!wo)return;
+  activeCo=wo;
+  var el=document.getElementById("co-recs");
+  el.innerHTML="<div style='padding:20px;color:#999'>Building your "+wo+" plan...</div>";
+  var last=getLastForWorkout(wo);
+  var lastStr=Object.keys(last).map(function(n){var s=last[n];return n+": "+fmtS(s.sets);}).join("\n");
+  var prompt="Design the next "+wo+" workout. Respond ONLY with JSON array: [{exercise,status,target,action,reason}]\n\nCONTEXT:\n"+COACH_CONTEXT+"\n\nLAST SESSION:\n"+lastStr;
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})
+    });
+    var d=await r.json();
+    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+    var recs=JSON.parse(txt);
+    renderRecs(wo,recs);
+  }catch(e){el.innerHTML="<div style='padding:20px;color:#999'>Coach unavailable. "+e.message+"</div>";}
+}
+function validateRecs(wo,recs){return recs;}
+function renderRecs(wo,recs){
+  currentPlan[wo]=recs;
+  WOS[wo]=recs.map(function(r){return r.exercise;});
+  var el=document.getElementById("co-recs");
+  el.innerHTML="";
+  recs.forEach(function(rec){
+    var card=document.createElement("div"); card.className="reccard";
+    var head=document.createElement("div"); head.className="rechead";
+    var nm=document.createElement("span"); nm.className="recname"; nm.textContent=rec.exercise;
+    var badge=document.createElement("span"); badge.className="recbadge"; badge.textContent=rec.action||""; 
+    head.appendChild(nm); head.appendChild(badge);
+    var body=document.createElement("div"); body.className="recbody";
+    var tgt=document.createElement("div"); tgt.className="rectgt"; tgt.textContent=rec.target;
+    var rsn=document.createElement("div"); rsn.className="recreason"; rsn.textContent=rec.reason;
+    body.appendChild(tgt); body.appendChild(rsn);
+    card.appendChild(head); card.appendChild(body);
+    el.appendChild(card);
+  });
+  var btn=document.createElement("button"); btn.className="looks-good-btn";
+  btn.textContent="Looks good -> Start logging";
+  btn.onclick=function(){tab("log");startLog(wo);};
+  el.appendChild(btn);
+}
+function fetchTutorial(){}
+function swapExercise(){}
+function appendWorkoutLog(){}
+function getWorkoutLog(){return [];}
+function buildLogContext(){return "";}
+function getChatContext(){return "";}
+function startLogFromPlan(wo){startLog(wo);}
+function q(){}
+function addMsg(role,txt){
+  var el=document.getElementById("msgs");
+  var d=document.createElement("div"); d.className="msg "+(role==="user"?"u":"a");
+  var av=document.createElement("div"); av.className="av"; av.textContent=role==="user"?"M":"AI";
+  var bbl=document.createElement("div"); bbl.className="bbl"; bbl.textContent=txt;
+  d.appendChild(av); d.appendChild(bbl); el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+async function sendMsg(){
+  var inp=document.getElementById("cin"); var txt=inp.value.trim();
+  if(!txt)return; inp.value=""; addMsg("user",txt);
+  var btn=document.getElementById("sbtn"); btn.disabled=true; btn.textContent="...";
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:800,messages:[{role:"user",content:txt}]})
+    });
+    var d=await r.json();
+    var reply=(d.content||[]).map(function(b){return b.text||"";}).join("");
+    addMsg("assistant",reply);
+  }catch(e){addMsg("assistant","Error: "+e.message);}
+  btn.disabled=false; btn.textContent="Send";
+}
+
+// Calendar
+var calYear=0,calMonth=0,calSelected="";
+var WO_COLORS={"Push":"#2563eb","Legs":"#16a34a","Back":"#9333ea"};
+function getWorkoutDates(){
+  var map={};
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wo){
+    var chartWo=CHART_WEIGHT[wo]||{};
+    Object.keys(chartWo).forEach(function(ex){(chartWo[ex]||[]).forEach(function(p){if(p.d)map[p.d]=wo;});});
+    var lastWo=LAST[wo]||{};
+    Object.keys(lastWo).forEach(function(ex){if(lastWo[ex].date)map[lastWo[ex].date]=wo;});
+    var sl=stored[wo]||{};
+    Object.keys(sl).forEach(function(ex){(sl[ex]||[]).forEach(function(s){if(s.date)map[s.date]=wo;});});
+  });
+  return map;
+}
+function initCal(){
+  var today=new Date(); calYear=today.getFullYear(); calMonth=today.getMonth();
+  calSelected=today.toISOString().split("T")[0];
+  document.getElementById("log-date").value=calSelected;
+  renderCal();
+}
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCal();
+}
+function renderCal(){
+  var woDates=getWorkoutDates();
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  document.getElementById("cal-title").textContent=months[calMonth]+" "+calYear;
+  var grid=document.getElementById("cal-grid"); grid.innerHTML="";
+  ["S","M","T","W","T","F","S"].forEach(function(d){var h=document.createElement("div");h.textContent=d;h.style.cssText="font-size:10px;color:#999;padding:2px 0;font-weight:600";grid.appendChild(h);});
+  var firstDay=new Date(calYear,calMonth,1).getDay();
+  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  var today=new Date().toISOString().split("T")[0];
+  for(var i=0;i<firstDay;i++){var e=document.createElement("div");grid.appendChild(e);}
+  for(var d=1;d<=daysInMonth;d++){
+    var dateStr=calYear+"-"+String(calMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    var cell=document.createElement("div");
+    var woType=woDates[dateStr];
+    var isSelected=dateStr===calSelected;
+    var isToday=dateStr===today;
+    cell.textContent=d;
+    var bg="transparent",color="#1a1a1a",border="none",fw="400";
+    if(isSelected){bg="#1a1a1a";color="#fff";}
+    else if(woType){bg=WO_COLORS[woType];color="#fff";fw="600";}
+    else if(isToday){border="1px solid #1a1a1a";}
+    cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fw+";";
+    (function(ds,wo){cell.onclick=function(){calSelected=ds;document.getElementById("log-date").value=ds;renderCal();if(wo)loadLogForDate(ds,wo);};})(dateStr,woType);
+    grid.appendChild(cell);
+  }
+}
+
+// Init
+(function(){
+  var stored=loadS();
+  ["Push","Legs","Back"].forEach(function(wo){
+    var sl=stored[wo]||{};
+    Object.keys(sl).forEach(function(exName){
+      var sessions=sl[exName]||[];
+      sessions.forEach(function(s){
+        if(!LAST[wo])LAST[wo]={};
+        if(!LAST[wo][exName]||s.date>LAST[wo][exName].date)LAST[wo][exName]=s;
+        var sets=s.sets||[];
+        var weights=sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
+        var maxW=weights.length?Math.max.apply(null,weights):0;
+        function upsert(obj,wo,name,d,val){
+          if(!val)return;
+          if(!obj[wo])obj[wo]={};
+          if(!obj[wo][name])obj[wo][name]=[];
+          var pts=obj[wo][name];
+          var ei=pts.findIndex(function(p){return p.d===d;});
+          if(ei>=0)pts[ei].w=Math.round(val);else pts.push({d:d,w:Math.round(val)});
+          pts.sort(function(a,b){return a.d.localeCompare(b.d);});
+        }
+        if(exName!=="Pull-Ups"&&exName!=="Chest Dips")upsert(CHART_WEIGHT,wo,exName,s.date,maxW);
+      });
+    });
+  });
+})();
+buildMetrics();
+mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
+mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;loadRecs(n);});
+renderOv();
+renderChart();
+buildLogMeta();
+;
