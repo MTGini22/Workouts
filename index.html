@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v8</title>
+<title>Workout Tracker v9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -295,9 +295,9 @@ function renderOv(){
     var sess=last[name]; var pts=chart[name]||[];
     var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
     var cls=diff>0?"up":diff<-5?"dn":"fl";
-    var sym=diff>0?"↑":diff<-5?"↓":"→";
+    var sym=diff>0?"^":diff<-5?"v":"->";
     var isBWex=(name==="Pull-Ups"||name==="Chest Dips");
-    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
+    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"-";
     var row=document.createElement("div"); row.className="exrow";
     var left=document.createElement("div"); left.style.minWidth="0";
     var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
@@ -394,7 +394,7 @@ function renderChart(){
                 y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
     }));
   });
-  // BW chart — always shown regardless of workout filter
+  // BW chart - always shown regardless of workout filter
   renderBWChart();
 }
 function loadLogForDate(date, wo){
@@ -532,7 +532,7 @@ function buildLogMeta(){
     var dates=Object.values(last).map(function(s){return s.date;});
     Object.values(sl).forEach(function(ss){if(ss&&ss.length)dates.push(ss[ss.length-1].date);});
     dates=dates.filter(Boolean).sort();
-    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" · Last: "+dates[dates.length-1];}
+    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" . Last: "+dates[dates.length-1];}
   });
 }
 function startLog(wo){
@@ -544,7 +544,7 @@ function startLog(wo){
   var stored=loadS();
   var c=document.getElementById("log-exs"); c.innerHTML="";
 
-  // Build exercise list from last session — always use most recent logged exercises
+  // Build exercise list from last session - always use most recent logged exercises
   // Merge stored sessions with LAST to get the freshest data
   var lastSession={};
   var lastDate="";
@@ -727,7 +727,7 @@ async function loadRecs(wo,force){
   if(workoutMode==="mini"){modeInstructions="MODE: MINI. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 4 accessories (2 pairs of 2) = 5 exercises total. For Back = Deadlift + Pull-Ups + 4 accessories (2 pairs of 2) = 6 exercises total. SETS: Anchor = AI judgment. Accessories = 3 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
   else if(workoutMode==="long"){modeInstructions="MODE: LONG. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 6 accessories (3 pairs of 2) = 7 exercises total. For Back = Deadlift + Pull-Ups + 6 accessories (3 pairs of 2) = 8 exercises total. SETS: Anchor = AI judgment. Accessories = 4 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
   else{modeInstructions="MODE: NORMAL. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 6 accessories (3 pairs of 2) = 7 exercises total. For Back = Deadlift + Pull-Ups + 6 accessories (3 pairs of 2) = 8 exercises total. SETS: Anchor = AI judgment. Accessories = 3 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
-  var prompt="Design the next "+wo+" workout session.\n\n"+modeInstructions+"\n\nATHLETE DATA:\n"+COACH_CONTEXT+"\n\nLAST SESSION:\n"+lastStr+logCtx+"\n\nRULES:\n1. Follow the exercise count above exactly. Count to verify before responding.\n2. Anchor lift always first. Use your judgment on its sets/reps/weight.\n3. All other exercises in superset pairs. Label [Pair A], [Pair B], [Pair C].\n4. Each pair = exactly 2 exercises targeting different muscles.\n5. Progressive overload: extrapolate from last 3-4 sessions. DB max +5lb, barbell max +10lb, cable max +5lb.\n6. PUSH = chest/shoulder/tricep only. BACK = back/traps/rear delt only. No bicep curls ever.\n7. Exercise name in JSON must exactly match what is prescribed.\n\nRespond ONLY with a JSON array — no text before or after:\n[{\"exercise\":\"name\",\"status\":\"keep|swap|new\",\"target\":\"e.g. [Pair A] 3x10 @ 60lb\",\"action\":\"increase|stay|technique|swap|new\",\"reason\":\"one sentence\"}]";
+  var prompt="Design the next "+wo+" workout session.\n\n"+modeInstructions+"\n\nATHLETE DATA:\n"+COACH_CONTEXT+"\n\nLAST SESSION:\n"+lastStr+logCtx+"\n\nRULES:\n1. Follow the exercise count above exactly. Count to verify before responding.\n2. Anchor lift always first. Use your judgment on its sets/reps/weight.\n3. All other exercises in superset pairs. Label [Pair A], [Pair B], [Pair C].\n4. Each pair = exactly 2 exercises targeting different muscles.\n5. Progressive overload: extrapolate from last 3-4 sessions. DB max +5lb, barbell max +10lb, cable max +5lb.\n6. PUSH = chest/shoulder/tricep only. BACK = back/traps/rear delt only. No bicep curls ever.\n7. Exercise name in JSON must exactly match what is prescribed.\n\nRespond ONLY with a JSON array - no text before or after:\n[{\"exercise\":\"name\",\"status\":\"keep|swap|new\",\"target\":\"e.g. [Pair A] 3x10 @ 60lb\",\"action\":\"increase|stay|technique|swap|new\",\"reason\":\"one sentence\"}]";
   try{
     var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
     var rdata=await resp.json();
@@ -806,7 +806,7 @@ function renderRecs(wo,recs){
     var nm=document.createElement("span"); nm.className="recname"; nm.textContent=rec.exercise;
     var action=rec.action||"stay";
     var bc=action==="increase"?"bup":action==="new"?"bnew":action==="swap"?"bswap":action==="technique"?"btech":"bhold";
-    var bl=action==="increase"?"↑ Increase":action==="new"?"★ New":action==="swap"?"⇄ Swap":action==="technique"?"Form focus":"Hold";
+    var bl=action==="increase"?"^ Increase":action==="new"?"* New":action==="swap"?"<-> Swap":action==="technique"?"Form focus":"Hold";
     var badge=document.createElement("span"); badge.className="recbadge "+bc; badge.textContent=bl;
     head.appendChild(nm); head.appendChild(badge);
     // Body
@@ -850,7 +850,7 @@ function renderRecs(wo,recs){
 
   // Looks good button
   var lgBtn=document.createElement("button"); lgBtn.className="looks-good-btn";
-  lgBtn.textContent="Looks good → Start logging";
+  lgBtn.textContent="Looks good -> Start logging";
   lgBtn.onclick=function(){
     tab("log");
     startLogFromPlan(wo);
@@ -874,7 +874,7 @@ async function fetchTutorial(exercise,el){
   searchLink.href="https://www.google.com/search?tbm=isch&q="+encodeURIComponent(exercise+" exercise form");
   searchLink.target="_blank";
   searchLink.style.cssText="display:inline-block;padding:6px 12px;background:#f0f0ee;border-radius:7px;font-size:11px;color:#555;text-decoration:none;";
-  searchLink.textContent="View exercise images ↗";
+  searchLink.textContent="View exercise images ->";
   imgWrap.appendChild(searchLink);
   img.style.cssText="width:100%;height:160px;object-fit:cover;";
   img.onerror=function(){imgWrap.style.display="none";};
@@ -920,7 +920,7 @@ async function swapExercise(wo,idx,currentEx){
     nm.textContent=alt.exercise;
     tgt.textContent=alt.target;
     rsn.textContent=alt.reason;
-    var badge=card.querySelector(".recbadge"); badge.textContent="⇄ Swap"; badge.className="recbadge bswap";
+    var badge=card.querySelector(".recbadge"); badge.textContent="<-> Swap"; badge.className="recbadge bswap";
     // Reset tutorial area so it loads fresh for new exercise
     var tutArea=card.querySelector(".tut-area");
     if(tutArea){
@@ -947,7 +947,7 @@ async function swapExercise(wo,idx,currentEx){
     if(swapBtn){
       swapBtn.onclick=function(){swapExercise(wo,idx,alt.exercise);};
     }
-  }catch(e){tgt.textContent="Swap failed — try again."; rsn.textContent="";}
+  }catch(e){tgt.textContent="Swap failed - try again."; rsn.textContent="";}
 }
 ;
 
