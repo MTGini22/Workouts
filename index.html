@@ -208,12 +208,26 @@ var SUPA_USER="mattmangini_workouts"; // fixed user ID - single user app
 
 async function cloudSave(data){
   try{
-    await fetch(SUPA_URL+"/rest/v1/workout_data",{
+    var resp=await fetch(SUPA_URL+"/rest/v1/workout_data",{
       method:"POST",
-      headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates"},
+      headers:{
+        "apikey":SUPA_KEY,
+        "Authorization":"Bearer "+SUPA_KEY,
+        "Content-Type":"application/json",
+        "Prefer":"resolution=merge-duplicates,return=minimal"
+      },
       body:JSON.stringify({user_id:SUPA_USER,data:JSON.stringify(data),updated_at:new Date().toISOString()})
     });
-  }catch(e){console.warn("Cloud save failed",e);}
+    if(!resp.ok){
+      var txt=await resp.text();
+      console.error("Cloud save error "+resp.status+":", txt);
+      return false;
+    }
+    return true;
+  }catch(e){
+    console.error("Cloud save failed:",e.message);
+    return false;
+  }
 }
 
 async function cloudLoad(){
@@ -221,9 +235,11 @@ async function cloudLoad(){
     var r=await fetch(SUPA_URL+"/rest/v1/workout_data?user_id=eq."+SUPA_USER+"&select=data,updated_at",{
       headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}
     });
+    if(!r.ok){console.error("Cloud load error "+r.status); return null;}
     var rows=await r.json();
+    console.log("Cloud load: "+rows.length+" rows");
     if(rows&&rows.length&&rows[0].data) return JSON.parse(rows[0].data);
-  }catch(e){console.warn("Cloud load failed",e);}
+  }catch(e){console.error("Cloud load failed:",e.message);}
   return null;
 }
 
@@ -1259,13 +1275,20 @@ function renderCal(){
     // Always save merged data back - this pushes phone data to cloud AND pulls cloud to phone
     _mem=merged;
     try{localStorage.setItem("wt3",JSON.stringify(merged));}catch(e){}
-    await cloudSave(merged);
+    var saved=await cloudSave(merged);
     var syncEl=document.createElement("div");
-    syncEl.style.cssText="position:fixed;bottom:8px;right:8px;font-size:10px;color:#bbb;z-index:999";
-    syncEl.textContent="✓ synced";
+    syncEl.style.cssText="position:fixed;bottom:8px;right:8px;font-size:11px;font-weight:500;padding:4px 8px;border-radius:6px;z-index:9999;background:"+(saved?"#dcfce7":"#fee2e2")+";color:"+(saved?"#166534":"#991b1b");
+    syncEl.textContent=saved?"✓ synced":"⚠ sync failed";
     document.body.appendChild(syncEl);
-    setTimeout(function(){syncEl.remove();},2000);
-  }catch(e){console.warn("Cloud sync skipped",e);}
+    setTimeout(function(){syncEl.remove();},3000);
+  }catch(e){
+    console.error("Cloud sync error:",e.message);
+    var errEl=document.createElement("div");
+    errEl.style.cssText="position:fixed;bottom:8px;right:8px;font-size:11px;padding:4px 8px;border-radius:6px;z-index:9999;background:#fee2e2;color:#991b1b";
+    errEl.textContent="⚠ sync error: "+e.message;
+    document.body.appendChild(errEl);
+    setTimeout(function(){errEl.remove();},5000);
+  }
 
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wo){
