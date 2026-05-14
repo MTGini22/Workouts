@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Workout Tracker v3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f2;color:#1a1a1a;font-size:14px}
@@ -204,41 +205,32 @@ function saveApiKey(k){localStorage.setItem("ak",k);}
 
 var SUPA_URL="https://phlcdbixqdxrsercmqmx.supabase.co";
 var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBobGNkYml4cWR4cnNlcmNtcW14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MDA4MTgsImV4cCI6MjA5NDI3NjgxOH0.Kk1P9cFJyEh_0F09DpuHtgeFWYVR48HR3NwTnfQAUoU";
-var SUPA_USER="mattmangini_workouts"; // fixed user ID - single user app
+var SUPA_USER="mattmangini_workouts";
+var _supaClient=null;
+function getSupaClient(){
+  if(!_supaClient&&window.supabase){
+    _supaClient=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+  }
+  return _supaClient;
+}
 
 async function cloudSave(data){
   try{
-    var resp=await fetch(SUPA_URL+"/rest/v1/workout_data",{
-      method:"POST",
-      headers:{
-        "apikey":SUPA_KEY,
-        "Authorization":"Bearer "+SUPA_KEY,
-        "Content-Type":"application/json",
-        "Prefer":"resolution=merge-duplicates,return=minimal"
-      },
-      body:JSON.stringify({user_id:SUPA_USER,data:JSON.stringify(data),updated_at:new Date().toISOString()})
-    });
-    if(!resp.ok){
-      var txt=await resp.text();
-      console.error("Cloud save error "+resp.status+":", txt);
-      return false;
-    }
+    var sb=getSupaClient();
+    if(!sb) return false;
+    var res=await sb.from("workout_data").upsert({user_id:SUPA_USER,data:JSON.stringify(data),updated_at:new Date().toISOString()},{onConflict:"user_id"});
+    if(res.error){console.error("Cloud save error:",res.error.message); return false;}
     return true;
-  }catch(e){
-    console.error("Cloud save failed:",e.message);
-    return false;
-  }
+  }catch(e){console.error("Cloud save failed:",e.message); return false;}
 }
 
 async function cloudLoad(){
   try{
-    var r=await fetch(SUPA_URL+"/rest/v1/workout_data?user_id=eq."+SUPA_USER+"&select=data,updated_at",{
-      headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}
-    });
-    if(!r.ok){console.error("Cloud load error "+r.status); return null;}
-    var rows=await r.json();
-    console.log("Cloud load: "+rows.length+" rows");
-    if(rows&&rows.length&&rows[0].data) return JSON.parse(rows[0].data);
+    var sb=getSupaClient();
+    if(!sb) return null;
+    var res=await sb.from("workout_data").select("data,updated_at").eq("user_id",SUPA_USER).single();
+    if(res.error&&res.error.code!=="PGRST116"){console.error("Cloud load error:",res.error.message); return null;}
+    if(res.data&&res.data.data) return JSON.parse(res.data.data);
   }catch(e){console.error("Cloud load failed:",e.message);}
   return null;
 }
