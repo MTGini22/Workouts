@@ -1290,7 +1290,7 @@ function renderCal(){
   });
 })();
 buildMetrics();
-mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
+mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;console.log("OV PILL CLICKED: "+n+" LAST keys: "+Object.keys(getLastForWorkout(n)).join(","));renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
 mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache={};loadRecs(n);});
 renderOv();
