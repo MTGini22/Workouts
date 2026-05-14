@@ -211,7 +211,11 @@ var _mem={};
 function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");}
 
 
-var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
+var EX_ORDER={
+  "Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Arnold Press", "Cable Tricep Pushdown", "Chest Dips", "Dumbbell Chest Fly", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension"],
+  "Legs": ["Barbell Squat", "Romanian Deadlift", "Calf Raise", "Walking Lunges", "Barbell Glute Bridge", "Hamstring Curl", "Goblet Squat", "Bulgarian Split Squat", "Leg Press"],
+  "Back": ["Barbell Deadlift", "Pull-Ups", "Face Pulls", "Cable Lat Pulldown", "Single Arm Dumbbell Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Chest-Supported Dumbbell Row", "Meadows Row"]
+};
 var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
@@ -475,10 +479,10 @@ function loadLogForDate(date, wo){
     document.querySelector(".savebtn").style.display="none";
     return;
   }
-  // Sort in FULL_SESSIONS historical order for this date
-  var fullDayKeys=Object.keys((FULL_SESSIONS[wo]||{})[date]||{});
+  // Sort using canonical EX_ORDER (which matches the program design)
+  var order=EX_ORDER[wo]||[];
   exsOnDate.sort(function(a,b){
-    var ai=fullDayKeys.indexOf(a.name); var bi=fullDayKeys.indexOf(b.name);
+    var ai=order.indexOf(a.name); var bi=order.indexOf(b.name);
     if(ai===-1&&bi===-1) return 0;
     if(ai===-1) return 1;
     if(bi===-1) return -1;
