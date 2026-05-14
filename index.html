@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v2</title>
+<title>Workout Tracker v3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -325,47 +325,51 @@ function buildMetrics(){
   });
 }
 function renderOv(){
-  var last=getLastForWorkout(activeOv);
-  // Add ALL exercises from full chart history
-  var chart=CHART_WEIGHT[activeOv]||{};
-  Object.keys(chart).forEach(function(name){
-    if(!last[name]){
-      var pts=chart[name]||[];
-      if(pts.length) last[name]={date:pts[pts.length-1].d,sets:[{reps:null,weight:pts[pts.length-1].w}]};
+  // Build complete exercise list from ALL sources
+  var allEx={};
+  // From baked-in chart data
+  Object.keys(CHART_WEIGHT[activeOv]||{}).forEach(function(n){
+    var pts=CHART_WEIGHT[activeOv][n]||[];
+    if(!allEx[n]&&pts.length) allEx[n]={date:pts[pts.length-1].d,sets:[{reps:null,weight:pts[pts.length-1].w}]};
+  });
+  // From CHART_BW (Pull-Ups=Back, Chest Dips=Push)
+  ["Pull-Ups","Chest Dips"].forEach(function(n){
+    var wo=n==="Pull-Ups"?"Back":"Push";
+    if(activeOv===wo&&!allEx[n]){
+      var pts=CHART_BW[n]||[];
+      if(pts.length) allEx[n]={date:pts[pts.length-1].d,sets:[{reps:pts[pts.length-1].w,weight:null}]};
     }
   });
-  // Add BW exercises
-  Object.keys(CHART_BW).forEach(function(bwName){
-    var belongsTo=(bwName==="Pull-Ups")?"Back":"Push";
-    if(activeOv===belongsTo&&!last[bwName]){
-      var pts=CHART_BW[bwName]||[];
-      if(pts.length) last[bwName]={date:pts[pts.length-1].d,sets:[{reps:pts[pts.length-1].w,weight:null}]};
-    }
+  // From LAST (overrides with newest data)
+  Object.keys(LAST[activeOv]||{}).forEach(function(n){
+    var s=LAST[activeOv][n];
+    if(!allEx[n]||s.date>allEx[n].date) allEx[n]=s;
   });
-  // Pull from LAST directly too
-  if(LAST[activeOv]){
-    Object.keys(LAST[activeOv]).forEach(function(name){
-      if(!last[name]) last[name]=LAST[activeOv][name];
-    });
-  }
-  // Sort in canonical order
+  // From localStorage (overrides with newest data)
+  var stored=loadS()[activeOv]||{};
+  Object.keys(stored).forEach(function(n){
+    var ss=stored[n]||[];
+    if(!ss.length) return;
+    ss.sort(function(a,b){return b.date.localeCompare(a.date);});
+    if(!allEx[n]||ss[0].date>allEx[n].date) allEx[n]=ss[0];
+  });
+  // Sort by EX_ORDER, unknowns alphabetically at end
   var order=EX_ORDER[activeOv]||[];
-  var names=Object.keys(last);
-  names.sort(function(a,b){
-    var ai=order.indexOf(a); var bi=order.indexOf(b);
-    if(ai===-1&&bi===-1) return a.localeCompare(b);
-    if(ai===-1) return 1; if(bi===-1) return -1;
+  var names=Object.keys(allEx).sort(function(a,b){
+    var ai=order.indexOf(a),bi=order.indexOf(b);
+    if(ai<0&&bi<0) return a.localeCompare(b);
+    if(ai<0) return 1; if(bi<0) return -1;
     return ai-bi;
   });
   var list=document.createElement("div"); list.className="exlist";
   names.forEach(function(name){
-    var sess=last[name];
+    var sess=allEx[name];
     var pts=(CHART_WEIGHT[activeOv]||{})[name]||[];
-    var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
+    var fW=pts.length?pts[0].w:0,lW=pts.length?pts[pts.length-1].w:0,diff=lW-fW;
     var cls=diff>0?"up":diff<-5?"dn":"fl";
     var sym=diff>0?"↑":diff<-5?"↓":"→";
-    var isBWex=(name==="Pull-Ups"||name==="Chest Dips");
-    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
+    var isBW=(name==="Pull-Ups"||name==="Chest Dips");
+    var diffStr=isBW?"BW":diff?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
     var row=document.createElement("div"); row.className="exrow";
     var left=document.createElement("div"); left.style.minWidth="0";
     var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
@@ -465,57 +469,45 @@ function renderChart(){
   // BW chart — always shown regardless of workout filter
   renderBWChart();
 }
-function loadLogForDate(date, wo){
+function loadLogForDate(date,wo){
   logWo=wo;
   document.getElementById("log-home").style.display="none";
   document.getElementById("log-form").classList.add("show");
   document.getElementById("okmsg").style.display="none";
   document.getElementById("log-date").value=date;
-  var stored=loadS();
-  var storedWo=stored[wo]||{};
   var c=document.getElementById("log-exs"); c.innerHTML="";
-  var exsOnDate=[];
-  // 1. FULL_SESSIONS has the complete workout for each historical date
-  var fullDay=(FULL_SESSIONS[wo]||{})[date]||{};
-  Object.keys(fullDay).forEach(function(exName){
-    exsOnDate.push({name:exName,session:fullDay[exName]});
+  var exMap={};
+  // 1. FULL_SESSIONS has complete spreadsheet data
+  Object.keys((FULL_SESSIONS[wo]||{})[date]||{}).forEach(function(n){
+    exMap[n]=(FULL_SESSIONS[wo][date][n]);
   });
-  // 2. localStorage overrides/adds (for recently logged sessions not in spreadsheet)
-  Object.keys(storedWo).forEach(function(exName){
-    var ss=storedWo[exName]||[];
-    var match=ss.filter(function(s){return s.date===date;});
-    if(match.length){
-      var existing=exsOnDate.findIndex(function(e){return e.name===exName;});
-      if(existing>=0) exsOnDate[existing]={name:exName,session:match[0]};
-      else exsOnDate.push({name:exName,session:match[0]});
-    }
+  // 2. localStorage overrides (more recent logged data)
+  var stored=loadS()[wo]||{};
+  Object.keys(stored).forEach(function(n){
+    var match=(stored[n]||[]).filter(function(s){return s.date===date;});
+    if(match.length) exMap[n]=match[0];
   });
-  // 3. Also check LAST for this date
-  if(!exsOnDate.length){
-    var lastWo=LAST[wo]||{};
-    Object.keys(lastWo).forEach(function(exName){
-      if(lastWo[exName].date===date) exsOnDate.push({name:exName,session:lastWo[exName]});
-    });
-  }
-  if(!exsOnDate.length){startLog(wo);return;}
-  // Sort in canonical workout order
+  // 3. LAST for this date
+  Object.keys(LAST[wo]||{}).forEach(function(n){
+    if(LAST[wo][n].date===date&&!exMap[n]) exMap[n]=LAST[wo][n];
+  });
+  if(!Object.keys(exMap).length){startLog(wo);return;}
+  // Sort canonically
   var order=EX_ORDER[wo]||[];
-  exsOnDate.sort(function(a,b){
-    var ai=order.indexOf(a.name); var bi=order.indexOf(b.name);
-    if(ai===-1&&bi===-1) return 0;
-    if(ai===-1) return 1;
-    if(bi===-1) return -1;
+  var names=Object.keys(exMap).sort(function(a,b){
+    var ai=order.indexOf(a),bi=order.indexOf(b);
+    if(ai<0&&bi<0) return a.localeCompare(b);
+    if(ai<0) return 1; if(bi<0) return -1;
     return ai-bi;
   });
-  exsOnDate.forEach(function(ex){
-    var exName=ex.name; var sess=ex.session;
+  names.forEach(function(exName){
+    var sess=exMap[exName];
     var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
     var sets=sess.sets||[];
     var block=document.createElement("div"); block.className="ex-block";
     var head=document.createElement("div"); head.className="ex-head";
     var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
-    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
-    prevSpan.textContent=fmtS(sets);
+    var prevSpan=document.createElement("span"); prevSpan.className="ex-prev"; prevSpan.textContent=fmtS(sets);
     head.appendChild(nameSpan); head.appendChild(prevSpan);
     var setrows=document.createElement("div"); setrows.className="setrows";
     sets.forEach(function(s,i){
@@ -523,18 +515,14 @@ function loadLogForDate(date, wo){
       var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
       row.appendChild(lbl);
       if(isPU){var gt=document.createElement("span");gt.className="gtag";gt.textContent=s.grip||PU_GRIPS[i]||"";row.appendChild(gt);}
-      var rInput=document.createElement("input");
-      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
-      rInput.value=s.reps||"";
-      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
-      row.appendChild(rInput);
+      var rIn=document.createElement("input"); rIn.className="sin"; rIn.type="number"; rIn.inputMode="numeric";
+      rIn.value=s.reps||""; rIn.setAttribute("data-ex",exName); rIn.setAttribute("data-si",i); rIn.setAttribute("data-f","reps");
+      row.appendChild(rIn);
       if(!isBW){
-        rInput.style.maxWidth="100px";
-        var wInput=document.createElement("input");
-        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
-        wInput.value=s.weight||"";
-        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
-        row.appendChild(wInput);
+        rIn.style.maxWidth="100px";
+        var wIn=document.createElement("input"); wIn.className="sin"; wIn.type="number"; wIn.inputMode="decimal";
+        wIn.value=s.weight||""; wIn.setAttribute("data-ex",exName); wIn.setAttribute("data-si",i); wIn.setAttribute("data-f","weight");
+        row.appendChild(wIn);
       }
       setrows.appendChild(row);
     });
