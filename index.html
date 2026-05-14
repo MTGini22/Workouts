@@ -245,6 +245,7 @@ function mergeData(local, cloud){
   return merged;
 }
 
+var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
 function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
