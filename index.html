@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v10</title>
+<title>Workout Tracker v11</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -203,6 +203,7 @@ function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTT
 
 
 var EX_ORDER={"Push": ["Bench Press", "Incline Dumbbell Press", "Dumbbell Lateral Raise", "Close-Grip Bench Press", "Seated DB Overhead Press", "Cable Fly (High to Low)", "Overhead Dumbbell Tricep Extension", "Arnold Press", "Cable Tricep Pushdown", "Dumbbell Chest Fly", "Chest Dips"], "Legs": ["Barbell Squat", "Romanian Deadlift", "Bulgarian Split Squat", "Hamstring Curl", "Leg Press", "Barbell Glute Bridge", "Calf Raise", "Walking Lunges", "Goblet Squat"], "Back": ["Barbell Deadlift", "Pull-Ups", "Chest-Supported Dumbbell Row", "Face Pulls", "Cable Lat Pulldown", "Meadows Row", "Barbell Shrugs", "Dumbbell Reverse Fly", "Single Arm Dumbbell Row"]};
+var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
 function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
@@ -294,9 +295,9 @@ function renderOv(){
     var sess=last[name]; var pts=chart[name]||[];
     var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
     var cls=diff>0?"up":diff<-5?"dn":"fl";
-    var sym=diff>0?"^":diff<-5?"v":"->";
+    var sym=diff>0?"↑":diff<-5?"↓":"→";
     var isBWex=(name==="Pull-Ups"||name==="Chest Dips");
-    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"-";
+    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
     var row=document.createElement("div"); row.className="exrow";
     var left=document.createElement("div"); left.style.minWidth="0";
     var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
@@ -393,7 +394,7 @@ function renderChart(){
                 y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
     }));
   });
-  // BW chart - always shown regardless of workout filter
+  // BW chart — always shown regardless of workout filter
   renderBWChart();
 }
 function loadLogForDate(date, wo){
@@ -531,7 +532,7 @@ function buildLogMeta(){
     var dates=Object.values(last).map(function(s){return s.date;});
     Object.values(sl).forEach(function(ss){if(ss&&ss.length)dates.push(ss[ss.length-1].date);});
     dates=dates.filter(Boolean).sort();
-    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" . Last: "+dates[dates.length-1];}
+    if(dates.length){var el=document.getElementById("lm-"+wn);if(el)el.textContent+=" · Last: "+dates[dates.length-1];}
   });
 }
 function startLog(wo){
@@ -543,7 +544,7 @@ function startLog(wo){
   var stored=loadS();
   var c=document.getElementById("log-exs"); c.innerHTML="";
 
-  // Build exercise list from last session - always use most recent logged exercises
+  // Build exercise list from last session — always use most recent logged exercises
   // Merge stored sessions with LAST to get the freshest data
   var lastSession={};
   var lastDate="";
@@ -712,446 +713,125 @@ function saveSession(){
   },2000);
 }
 var COACH_CONTEXT="ATHLETE PROFILE:\nFormer D1 soccer player, recreational soccer + running, bilateral Achilles tendinopathy, hip flexor strain.\nTraining split: Push / Legs / Back. Rotating days, roughly 1x/week each.\nKey issue: Has been doing nearly identical workouts for 12+ months. Needs variety and progressive overload.\n\nSTRICT WORKOUT RULES:\n1. Push ALWAYS starts with Bench Press. Legs ALWAYS starts with Barbell Squat. Back ALWAYS starts with Barbell Deadlift.\n2. Anchor lift (Bench/Squat/Deadlift) gets ONE warmup set at ~60% working weight, 8-10 reps. No other exercise needs warmup.\n3. All other exercises are in SUPERSET PAIRS. Label each pair [Pair A], [Pair B], [Pair C] in the target field.\n4. Pull-Ups ALWAYS in Back: 4 sets alternating neutral/wide to failure. Add weight when athlete hits 12+ reps neutral.\n5. Achilles: no explosive calf work. RDL: controlled tempo. Hip flexor: avoid deep lunges.\n\nWORKOUT MODES \u2014 set counts and exercise count:\n- MINI (~30 min): Anchor lift + 2 pairs (4 exercises total). Anchor: 3 working sets. Pairs: 2-3 sets each.\n- NORMAL (~50 min): Anchor lift + 2-3 pairs (5-6 exercises). Anchor: 3-4 working sets. Pairs: 3 sets each. Be STRATEGIC \u2014 compound movements get more sets, isolation gets fewer.\n- LONG (~70 min): Anchor lift + 3 pairs (7 exercises). Anchor: 4-5 working sets. Pairs: 4 sets each.\n\nPAIRING STRATEGY \u2014 design pairs based on:\n1. FATIGUE SEQUENCING: Early pairs = compound/heavy (more energy). Late pairs = isolation/lighter (muscles fatiguing).\n2. MUSCLE ANTAGONISM: Pair pushing muscles with pulling muscles, or upper with lower, to maximize recovery between sets.\n   - Good Push pairs: Chest press + Rear delt/row | Shoulder press + Lat movement | Tricep + Bicep | Chest fly + Face pull\n   - Good Back pairs: Row + Pull variation | Deadlift accessory + Bicep curl | Shrug + Rear delt fly\n   - Good Leg pairs: Quad dominant + Hamstring dominant | Glute + Calf | Lunge + Hip hinge\n3. AVOID pairing same muscle groups (e.g. bench + incline press = bad pair, both hit chest with same fatigue).\n4. PAIR ORDER matters: In a 60-min session, early pairs are compound movements that need more energy. Later pairs are isolation.\n\nEXERCISE CATEGORIZATION \u2014 ABSOLUTE RULES, NO EXCEPTIONS:\n\nPUSH workout contains ONLY these muscle groups: chest, front delts, side delts, triceps.\nPUSH exercises: Bench Press, Close-Grip Bench, Incline Press (barbell/DB), Decline Press, Cable Fly, Chest Fly, Pec Dec, Dips (chest), Push-Up variations, Overhead Press, Arnold Press, Seated DB Press, Z-Press, Lateral Raise, Front Raise, Tricep Pushdown, Overhead Tricep Extension, Skull Crushers, JM Press, Tate Press.\nNEVER in Push: Face Pulls, Rear Delt Fly, Rows, Pull-Ups, Lat Pulldown, Bicep Curls, Deadlifts, anything targeting back or rear delts.\n\nBACK/PULL workout contains ONLY: lats, traps, rhomboids, rear delts, biceps (but NO bicep curls \u2014 athlete does those separately).\nBACK exercises: Deadlift variations, Rack Pull, Farmer Carry, Pull-Ups, Chin-Ups, Lat Pulldown, Straight-Arm Pulldown, All Row variations (Barbell/DB/Cable/T-Bar/Chest-Supported/Meadows/Pendlay), Face Pulls, Rear Delt Fly, Reverse Fly, Band Pull-Apart, Barbell Shrugs, DB Shrugs.\nNEVER in Back: Bicep Curls of any kind (athlete does these separately \u2014 DO NOT suggest them ever), chest exercises, shoulder pressing, tricep work.\n\nLEGS workout contains ONLY: quads, hamstrings, glutes, calves.\nLEGS exercises: Squat variations, Leg Press, Hack Squat, RDL, Nordic Curl, Hamstring Curl, Good Morning, Hip Thrust, Glute Bridge, Cable Kickback, Calf Raise, Lunge variations, Bulgarian Split Squat, Step-Up.\nNEVER in Legs: any upper body exercise.\n\nCRITICAL NAMING RULE: The exercise name in the JSON must EXACTLY match what you are prescribing. If you swap Incline DB Press for Decline DB Press, the exercise name field must say \"Decline Dumbbell Press\", not \"Incline Dumbbell Press\". The name and the description must always match.\n\nNEVER SUGGEST BICEP CURLS IN ANY FORM \u2014 the athlete does these separately and does not want them in their program.\n\n\nCURRENT WORKING EXERCISE TEMPLATES (science-based, optimally designed):\n\nPUSH template (established 2026-05-11):\n- Anchor: Bench Press (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pair A: Incline Dumbbell Press + Dumbbell Lateral Raise\n  RATIONALE: Upper chest (different angle from flat) + side delt isolation. Zero primary overlap. Both moderate weight, good early when fresher after bench.\n- Pair B: Close-Grip Bench Press + Seated DB Overhead Press\n  RATIONALE: Tricep compound + front/side delt compound. Different primary movers. CGBP builds tricep strength while OHP builds shoulder pressing strength.\n- Pair C: Cable Fly (High to Low) + Overhead Dumbbell Tricep Extension\n  RATIONALE: Chest isolation + tricep isolation. Completely different muscles. Perfect finisher \u2014 both light, high rep, pump-focused.\n\nLEGS template (redesigned 2026-05-11 \u2014 replacing plateaued exercises):\n- Anchor: Barbell Squat (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pair A: Romanian Deadlift + Bulgarian Split Squat\n  RATIONALE: Hip hinge (hamstring/glute) + unilateral quad/glute. True movement pattern variety. BSS replaces Walking Lunges \u2014 more glute activation, better strength stimulus, loads heavier.\n- Pair B: Hamstring Curl + Leg Press\n  RATIONALE: Hamstring isolation + quad compound. True antagonists \u2014 one rests completely while other works. Leg Press replaces Goblet Squat \u2014 allows much heavier loading for quad development.\n- Pair C: Barbell Glute Bridge + Calf Raise\n  RATIONALE: Glute isolation + calf isolation. Completely different muscles. Keep Glute Bridge (progressing well). Keep Calf Raise but increase load and reduce reps (15 reps @ 35lb instead of 20 @ 25lb) to break plateau.\n\nBACK template (redesigned 2026-05-11 \u2014 major refresh after 9 months of plateau):\n- Anchor: Barbell Deadlift (solo, always first \u2014 1 warmup + 3-4 working sets)\n- Pull-Ups (semi-anchor, always second \u2014 4 sets N/W/N/W to failure)\n- Pair A: Pull-Ups + Dead Hang or Hollow Body Hold\n  UPDATE: Pair Pull-Ups with a core/ab exercise (Dead Hang, Hollow Body Hold, or Ab Wheel Rollout) \u2014 completely different muscles, zero fatigue overlap. Pull-Ups stay 4 sets N/W/N/W.\n- Pair B: Chest-Supported Dumbbell Row + Face Pulls\n  RATIONALE: Replaces SA Row (plateaued at 50lb for 4+ sessions). Chest-supported row removes momentum, forces strict form, hits rhomboids/mid-traps differently. Paired with Face Pulls (rear delt \u2014 different primary).\n- Pair C: Cable Lat Pulldown + Meadows Row (or T-Bar Row)\n  RATIONALE: Vertical pull (lats) + horizontal pull variation. Replace SA Row with Meadows Row for more overload potential. Lat Pulldown is plateaued \u2014 switch to 5x5 @ 132lb to break it.\n- Pair D: Barbell Shrugs + Dumbbell Reverse Fly\n  RATIONALE: Both plateaued \u2014 increase Shrugs to 4x8 @ 95lb (big jump to force adaptation). Reverse Fly move to 3x15 @ 15lb with slower tempo (2-second hold at top). NOTE on Shrugs: these are 70lb DUMBBELLS \u2014 a realistic next jump is 75-80lb, not 95lb. Never jump more than 5-10lb on dumbbell exercises.\n\nNOTE: Back now has 4 pairs (8 exercises + anchor + pull-ups = long workout). For Normal mode use Pairs A-C only (skip D). For Long mode use all 4 pairs.\n\nTEMPLATE RULES:\n1. Follow this exact order and pairing every session. Do not rearrange pairs.\n2. Keep all exercises unless plateaued 4+ sessions. Swap only that exercise, keep pairing logic.\n3. Anchor lifts never change. Pull-Ups never change. Only weight/rep scheme evolves.\n4. Extrapolate weights from last 3-4 sessions \u2014 never reset. Build on previous session.\n5. When swapping within a pair, replace with same muscle group to maintain pairing rationale.";
-async function loadRecs(wo,force){
-  if(!force&&recsCache[wo]){renderRecs(wo,recsCache[wo]);return;}
+function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");}
+async function cloudSave(d){return false;}
+async function cloudLoad(){return null;}
+function saveS(h){_mem=h;try{localStorage.setItem("wt3",JSON.stringify(h));}catch(e){}}
+function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
+async function loadRecs(wo){
+  if(!wo)return;
+  activeCo=wo;
   var el=document.getElementById("co-recs");
-  el.innerHTML="<div class='ldrec'>Building your "+wo+" plan...</div>";
+  el.innerHTML="<div style='padding:20px;color:#999'>Building your "+wo+" plan...</div>";
   var last=getLastForWorkout(wo);
-  var lastStr=Object.keys(last).map(function(name){
-    var sess=last[name];
-    return name+": "+fmtS(sess.sets);
-  }).join("\n");
-  var logCtx=buildLogContext(wo)+getChatContext();
-  var modeInstructions="";
-  if(workoutMode==="mini"){modeInstructions="MODE: MINI. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 4 accessories (2 pairs of 2) = 5 exercises total. For Back = Deadlift + Pull-Ups + 4 accessories (2 pairs of 2) = 6 exercises total. SETS: Anchor = AI judgment. Accessories = 3 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
-  else if(workoutMode==="long"){modeInstructions="MODE: LONG. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 6 accessories (3 pairs of 2) = 7 exercises total. For Back = Deadlift + Pull-Ups + 6 accessories (3 pairs of 2) = 8 exercises total. SETS: Anchor = AI judgment. Accessories = 4 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
-  else{modeInstructions="MODE: NORMAL. OUTPUT MUST CONTAIN EXACTLY: For Push/Legs = 1 anchor + 6 accessories (3 pairs of 2) = 7 exercises total. For Back = Deadlift + Pull-Ups + 6 accessories (3 pairs of 2) = 8 exercises total. SETS: Anchor = AI judgment. Accessories = 3 sets each. Pull-Ups = always 4 sets. Each pair has EXACTLY 2 exercises. Count your exercises before responding.";}
-  var prompt="Design the next "+wo+" workout session.\n\n"+modeInstructions+"\n\nATHLETE DATA:\n"+COACH_CONTEXT+"\n\nLAST SESSION:\n"+lastStr+logCtx+"\n\nRULES:\n1. Follow the exercise count above exactly. Count to verify before responding.\n2. Anchor lift always first. Use your judgment on its sets/reps/weight.\n3. All other exercises in superset pairs. Label [Pair A], [Pair B], [Pair C].\n4. Each pair = exactly 2 exercises targeting different muscles.\n5. Progressive overload: extrapolate from last 3-4 sessions. DB max +5lb, barbell max +10lb, cable max +5lb.\n6. PUSH = chest/shoulder/tricep only. BACK = back/traps/rear delt only. No bicep curls ever.\n7. Exercise name in JSON must exactly match what is prescribed.\n\nRespond ONLY with a JSON array - no text before or after:\n[{\"exercise\":\"name\",\"status\":\"keep|swap|new\",\"target\":\"e.g. [Pair A] 3x10 @ 60lb\",\"action\":\"increase|stay|technique|swap|new\",\"reason\":\"one sentence\"}]";
+  var lastStr=Object.keys(last).map(function(n){var s=last[n];return n+": "+fmtS(s.sets);}).join("\n");
+  var prompt="Design the next "+wo+" workout. Respond ONLY with JSON array: [{exercise,status,target,action,reason}]\n\nCONTEXT:\n"+COACH_CONTEXT+"\n\nLAST SESSION:\n"+lastStr;
   try{
-    var resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
-    var rdata=await resp.json();
-    var txt=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
+    var r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})
+    });
+    var d=await r.json();
+    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
     var recs=JSON.parse(txt);
-    // Validate exercise count - retry once if wrong
-    var expectedAccessories=workoutMode==="mini"?4:6;
-    var anchorCount=wo==="Back"?2:1; // Back has Deadlift + Pull-Ups as anchors
-    var expectedTotal=anchorCount+expectedAccessories;
-    if(recs.length<expectedTotal){
-      // Try to get missing exercises by asking again with stricter count
-      var retryPrompt="Your previous response had "+recs.length+" exercises but needed exactly "+expectedTotal+". The current plan: "+recs.map(function(r){return r.exercise;}).join(", ")+". Add the missing "+(expectedTotal-recs.length)+" exercise(s) to complete the "+wo+" "+workoutMode+" workout. Each pair needs exactly 2 exercises. Return the COMPLETE updated JSON array with all "+expectedTotal+" exercises.";
-      var retryResp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1500,messages:[{role:"user",content:prompt},{role:"assistant",content:txt},{role:"user",content:retryPrompt}]})});
-      var retryData=await retryResp.json();
-      var retryTxt=(retryData.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
-      try{recs=JSON.parse(retryTxt);}catch(e){}
-    }
-    recsCache[wo]=recs; renderRecs(wo,recs);
-  }catch(e){
-    var errDiv=document.createElement("div"); errDiv.className="ldrec";
-    errDiv.textContent="Coach needs internet. ";
-    var retryBtn=document.createElement("button");
-    retryBtn.textContent="Retry";
-    retryBtn.style.cssText="background:none;border:none;color:#2563eb;cursor:pointer;font-size:13px";
-    retryBtn.onclick=function(){loadRecs(activeCo);};
-    errDiv.appendChild(retryBtn);
-    el.innerHTML=""; el.appendChild(errDiv);
-  }
+    renderRecs(wo,recs);
+  }catch(e){el.innerHTML="<div style='padding:20px;color:#999'>Coach unavailable. "+e.message+"</div>";}
 }
-function validateRecs(wo, recs){
-  // Only block clearly wrong-category exercises
-  var PUSH_BLOCKED=["face pull","rear delt"," row","pull-up","pullup","chin-up","chinup","lat pulldown","bicep curl","deadlift","barbell shrug","reverse fly"];
-  var BACK_BLOCKED=["lateral raise","chest fly","pec dec","bench press","overhead press","incline press","decline press","push-up","pushup"];
-  var filtered=[];
-  recs.forEach(function(rec){
-    var name=rec.exercise.toLowerCase();
-    var bad=false;
-    if(wo==="Push") PUSH_BLOCKED.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
-    if(wo==="Back") BACK_BLOCKED.forEach(function(kw){if(name.indexOf(kw)>=0)bad=true;});
-    // Block ONLY bicep curls (not hamstring curl, not cable curl for back etc)
-    var isBicepCurl=(name.indexOf("bicep")>=0&&name.indexOf("curl")>=0)||(name==="curl")||(name.indexOf("preacher curl")>=0)||(name.indexOf("hammer curl")>=0);
-    if(isBicepCurl) bad=true;
-    if(!bad) filtered.push(rec);
-    else console.warn("Filtered: "+rec.exercise);
-  });
-  return filtered;
-}
+function validateRecs(wo,recs){return recs;}
 function renderRecs(wo,recs){
-  recs=validateRecs(wo,recs);
-  var el=document.getElementById("co-recs"); el.innerHTML="";
-  // Store plan
   currentPlan[wo]=recs;
   WOS[wo]=recs.map(function(r){return r.exercise;});
-  if(!CHART[wo])CHART[wo]={};
-  recs.forEach(function(r){if(!CHART[wo][r.exercise])CHART[wo][r.exercise]=[];});
-
-  // Mode toggle
-  var modeBar=document.createElement("div"); modeBar.className="mode-bar";
-  [["mini","Mini (~30 min)"],["normal","Normal (~50 min)"],["long","Long (~70 min)"]].forEach(function(m){
-    var btn=document.createElement("button");
-    btn.className="mode-btn"+(workoutMode===m[0]?" mode-on":"");
-    btn.textContent=m[1];
-    (function(mode){btn.onclick=function(){
-      workoutMode=mode;
-      recsCache={}; // clear ALL cached recs when mode changes
-      loadRecs(wo,true);
-    };})(m[0]);
-    modeBar.appendChild(btn);
-  });
-  el.appendChild(modeBar);
-
-  recs.forEach(function(rec,idx){
+  var el=document.getElementById("co-recs");
+  el.innerHTML="";
+  recs.forEach(function(rec){
     var card=document.createElement("div"); card.className="reccard";
-    // Header
     var head=document.createElement("div"); head.className="rechead";
     var nm=document.createElement("span"); nm.className="recname"; nm.textContent=rec.exercise;
-    var action=rec.action||"stay";
-    var bc=action==="increase"?"bup":action==="new"?"bnew":action==="swap"?"bswap":action==="technique"?"btech":"bhold";
-    var bl=action==="increase"?"^ Increase":action==="new"?"* New":action==="swap"?"<-> Swap":action==="technique"?"Form focus":"Hold";
-    var badge=document.createElement("span"); badge.className="recbadge "+bc; badge.textContent=bl;
+    var badge=document.createElement("span"); badge.className="recbadge"; badge.textContent=rec.action||""; 
     head.appendChild(nm); head.appendChild(badge);
-    // Body
     var body=document.createElement("div"); body.className="recbody";
     var tgt=document.createElement("div"); tgt.className="rectgt"; tgt.textContent=rec.target;
     var rsn=document.createElement("div"); rsn.className="recreason"; rsn.textContent=rec.reason;
     body.appendChild(tgt); body.appendChild(rsn);
-    // Tutorial
-    var tutDiv=document.createElement("div"); tutDiv.className="tut-area"; tutDiv.style.display="none";
-    tutDiv.id="tut-"+wo+"-"+idx;
-    body.appendChild(tutDiv);
-    // Action row
-    var actRow=document.createElement("div"); actRow.className="rec-actions";
-    var tutBtn=document.createElement("button"); tutBtn.className="rec-act-btn";
-    tutBtn.textContent="How to do this";
-    (function(ex,tid){
-      tutBtn.onclick=function(){
-        var d=document.getElementById(tid);
-        if(d.style.display==="none"){
-          d.style.display="block";
-          if(!d.dataset.loaded){
-            d.textContent="Loading...";
-            d.dataset.loaded="1";
-            fetchTutorial(ex,d);
-          }
-        } else {d.style.display="none";}
-      };
-    })(rec.exercise,"tut-"+wo+"-"+idx);
-    var swapBtn=document.createElement("button"); swapBtn.className="rec-act-btn";
-    swapBtn.textContent="Swap exercise";
-    (function(ex,i){
-      swapBtn.onclick=function(){swapExercise(wo,i,ex);};
-    })(rec.exercise,idx);
-    actRow.appendChild(tutBtn); actRow.appendChild(swapBtn);
-    body.appendChild(actRow);
     card.appendChild(head); card.appendChild(body);
     el.appendChild(card);
   });
-
-  if(!recs.length){el.innerHTML="<div class='ldrec'>No recommendations.</div>";return;}
-
-  // Looks good button
-  var lgBtn=document.createElement("button"); lgBtn.className="looks-good-btn";
-  lgBtn.textContent="Looks good -> Start logging";
-  lgBtn.onclick=function(){
-    tab("log");
-    startLogFromPlan(wo);
-  };
-  el.appendChild(lgBtn);
+  var btn=document.createElement("button"); btn.className="looks-good-btn";
+  btn.textContent="Looks good -> Start logging";
+  btn.onclick=function(){tab("log");startLog(wo);};
+  el.appendChild(btn);
 }
-
-async function fetchTutorial(exercise,el){
-  var prompt="Give a concise exercise tutorial for: "+exercise+". Cover: proper form in 2-3 sentences, key cues, and one common mistake to avoid. Keep it under 80 words total.";
-  // Build UI immediately
-  el.innerHTML="";
-  // Image
-  var imgWrap=document.createElement("div"); imgWrap.style.cssText="margin-bottom:8px;border-radius:8px;overflow:hidden;background:#f0f0ee;height:160px;display:flex;align-items:center;justify-content:center;";
-  var img=document.createElement("img");
-  var query=encodeURIComponent(exercise+" exercise form");
-  img.src="https://api.dicebear.com/7.x/initials/svg?seed="+encodeURIComponent(exercise);
-  // Try to load a real image via search
-  img.style.display="none";
-  imgWrap.style.cssText="margin-bottom:8px;text-align:center;";
-  var searchLink=document.createElement("a");
-  searchLink.href="https://www.google.com/search?tbm=isch&q="+encodeURIComponent(exercise+" exercise form");
-  searchLink.target="_blank";
-  searchLink.style.cssText="display:inline-block;padding:6px 12px;background:#f0f0ee;border-radius:7px;font-size:11px;color:#555;text-decoration:none;";
-  searchLink.textContent="View exercise images ->";
-  imgWrap.appendChild(searchLink);
-  img.style.cssText="width:100%;height:160px;object-fit:cover;";
-  img.onerror=function(){imgWrap.style.display="none";};
-  el.appendChild(imgWrap);
-  // YouTube link
-  var ytLink=document.createElement("a");
-  ytLink.href="https://www.youtube.com/results?search_query="+encodeURIComponent(exercise+" exercise tutorial form");
-  ytLink.target="_blank";
-  ytLink.style.cssText="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#dc2626;text-decoration:none;margin-bottom:8px;font-weight:500;";
-  ytLink.innerHTML="&#9654; Watch on YouTube";
-  el.appendChild(ytLink);
-  // Text
-  var txtEl=document.createElement("div"); txtEl.textContent="Loading..."; el.appendChild(txtEl);
-  try{
-    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:200,messages:[{role:"user",content:prompt}]})});
-    var d=await r.json();
-    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
-    txtEl.textContent=txt;
-  }catch(e){txtEl.textContent="Tutorial unavailable.";}
-}
-
-async function swapExercise(wo,idx,currentEx){
-  var card=document.getElementById("co-recs").querySelectorAll(".reccard")[idx];
-  var tgt=card.querySelector(".rectgt");
-  var rsn=card.querySelector(".recreason");
-  var nm=card.querySelector(".recname");
-  tgt.textContent="Finding alternative..."; rsn.textContent="";
-  var plan=currentPlan[wo]||[];
-  var others=plan.map(function(r){return r.exercise;}).filter(function(e){return e!==currentEx;}).join(", ");
-  var prompt="Suggest ONE alternative exercise to replace "+currentEx+" in a "+wo+" workout. Other exercises: "+others+". Include exact sets x reps @ weight. Respond with JSON only, fields: exercise, target, action (swap), reason, status (swap).";
-  try{
-    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:200,messages:[{role:"user",content:prompt}]})});
-    var d=await r.json();
-    var txt=(d.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").replace(/```json|```/g,"").trim();
-    var alt=JSON.parse(txt);
-    // Update plan
-    currentPlan[wo][idx]=alt;
-    WOS[wo][idx]=alt.exercise;
-    if(!CHART[wo][alt.exercise])CHART[wo][alt.exercise]=[];
-    if(!CHART_WEIGHT[wo])CHART_WEIGHT[wo]={};
-    if(!CHART_WEIGHT[wo][alt.exercise])CHART_WEIGHT[wo][alt.exercise]=[];
-    // Update card UI
-    nm.textContent=alt.exercise;
-    tgt.textContent=alt.target;
-    rsn.textContent=alt.reason;
-    var badge=card.querySelector(".recbadge"); badge.textContent="<-> Swap"; badge.className="recbadge bswap";
-    // Reset tutorial area so it loads fresh for new exercise
-    var tutArea=card.querySelector(".tut-area");
-    if(tutArea){
-      tutArea.style.display="none";
-      tutArea.innerHTML="";
-      delete tutArea.dataset.loaded;
-    }
-    // Update how-to button to reference new exercise
-    var tutBtn=card.querySelectorAll(".rec-act-btn")[0];
-    if(tutBtn){
-      tutBtn.onclick=function(){
-        if(tutArea.style.display==="none"){
-          tutArea.style.display="block";
-          if(!tutArea.dataset.loaded){
-            tutArea.textContent="Loading...";
-            tutArea.dataset.loaded="1";
-            fetchTutorial(alt.exercise,tutArea);
-          }
-        } else {tutArea.style.display="none";}
-      };
-    }
-    // Update swap button too
-    var swapBtn=card.querySelectorAll(".rec-act-btn")[1];
-    if(swapBtn){
-      swapBtn.onclick=function(){swapExercise(wo,idx,alt.exercise);};
-    }
-  }catch(e){tgt.textContent="Swap failed - try again."; rsn.textContent="";}
-}
-;
-
-function appendWorkoutLog(entry){
-  try{
-    var log=JSON.parse(localStorage.getItem("wlog")||"[]");
-    log.push(entry);
-    if(log.length>50)log=log.slice(log.length-50);
-    localStorage.setItem("wlog",JSON.stringify(log));
-  }catch(e){}
-}
-function getWorkoutLog(){
-  try{return JSON.parse(localStorage.getItem("wlog")||"[]");}catch(e){return [];}
-}
-function buildLogContext(wo){
-  var log=getWorkoutLog().filter(function(e){return e.workout===wo;});
-  if(!log.length)return "";
-  var lines=["","COMPLETED SESSION LOG (most recent first):"];
-  log.slice().reverse().slice(0,10).forEach(function(entry){
-    lines.push(entry.date+":");
-    entry.exercises.forEach(function(ex){
-      var line="  "+ex.name+": did "+ex.actual;
-      if(ex.target)line+=" (target was "+ex.target+")";
-      lines.push(line);
-    });
-  });
-  return lines.join("\n");
-}
-function getChatContext(){
-  try{
-    var chatLog=JSON.parse(localStorage.getItem("chatlog")||"[]");
-    if(!chatLog.length)return "";
-    var lines=["","ATHLETE NOTES FROM COACH CHAT:"];
-    chatLog.slice(-8).forEach(function(entry){
-      lines.push(entry.date+" Q: "+entry.q);
-      lines.push("  A: "+entry.a);
-    });
-    return lines.join("\n");
-  }catch(e){return "";}
-}
-
-function startLogFromPlan(wo){
-  logWo=wo;
-  document.getElementById("log-home").style.display="none";
-  document.getElementById("log-form").classList.add("show");
-  document.getElementById("okmsg").style.display="none";
-  initCal();
-  var plan=currentPlan[wo]||[];
-  var c=document.getElementById("log-exs"); c.innerHTML="";
-  plan.forEach(function(rec){
-    var exName=rec.exercise;
-    var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
-    var hasWarmup=rec.target.toLowerCase().indexOf("warmup")>=0||rec.target.toLowerCase().indexOf("warm")>=0;
-    var targetSets=3; var targetReps=""; var targetWeight="";
-    var m=rec.target.match(/([0-9]+)x([0-9]+)[\s]*@?[\s]*([0-9\.]+)?/);
-    if(m){targetSets=parseInt(m[1])||3; targetReps=m[2]||""; targetWeight=m[3]||"";}
-    var thenMatch=rec.target.match(/then[\s]+([0-9]+)x([0-9]+)[\s]*@?[\s]*([0-9\.]+)?/i);
-    if(thenMatch){targetSets=parseInt(thenMatch[1])||targetSets; targetReps=thenMatch[2]||targetReps; targetWeight=thenMatch[3]||targetWeight;}
-    var progressWeights=[];
-    var progressMatch=rec.target.match(/([0-9]+(?:\/[0-9]+)+)lb/);
-    if(progressMatch){progressWeights=progressMatch[1].split("/"); targetSets=progressWeights.length;}
-    var totalSets=hasWarmup?targetSets+1:targetSets;
-    var block=document.createElement("div"); block.className="ex-block";
-    var head=document.createElement("div"); head.className="ex-head";
-    var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
-    var targetSpan=document.createElement("span"); targetSpan.className="ex-prev"; targetSpan.textContent=rec.target;
-    head.appendChild(nameSpan); head.appendChild(targetSpan);
-    var setrows=document.createElement("div"); setrows.className="setrows";
-    for(var i=0;i<totalSets;i++){
-      var isWarmup=hasWarmup&&i===0;
-      var row=document.createElement("div"); row.className="setrow";
-      var lbl=document.createElement("span"); lbl.className="slbl";
-      lbl.textContent=isWarmup?"Warmup":"Set "+(hasWarmup?i:i+1);
-      row.appendChild(lbl);
-      if(isPU){
-        var gt=document.createElement("span"); gt.className="gtag";
-        gt.textContent=PU_GRIPS[i]||"Neutral"; row.appendChild(gt);
-      }
-      var rInput=document.createElement("input");
-      rInput.className="sin"; rInput.type="number"; rInput.inputMode="numeric";
-      rInput.placeholder=targetReps?"reps ("+targetReps+")":"reps";
-      rInput.setAttribute("data-ex",exName); rInput.setAttribute("data-si",i); rInput.setAttribute("data-f","reps");
-      row.appendChild(rInput);
-      if(!isBW){
-        rInput.style.maxWidth="100px";
-        var wInput=document.createElement("input");
-        wInput.className="sin"; wInput.type="number"; wInput.inputMode="decimal";
-        if(isWarmup&&targetWeight){
-          wInput.placeholder="lbs (~"+(Math.round(parseFloat(targetWeight)*0.6/5)*5)+")";
-        } else if(progressWeights.length){
-          var pwIdx=hasWarmup?i-1:i;
-          wInput.placeholder=progressWeights[pwIdx]?"lbs ("+progressWeights[pwIdx]+")":"lbs";
-        } else {
-          wInput.placeholder=targetWeight?"lbs ("+targetWeight+")":"lbs";
-        }
-        wInput.setAttribute("data-ex",exName); wInput.setAttribute("data-si",i); wInput.setAttribute("data-f","weight");
-        row.appendChild(wInput);
-      }
-      setrows.appendChild(row);
-    }
-    block.appendChild(head); block.appendChild(setrows);
-    c.appendChild(block);
-  });
-}
-
-function q(txt){document.getElementById("cin").value=txt;sendMsg();}
+function fetchTutorial(){}
+function swapExercise(){}
+function appendWorkoutLog(){}
+function getWorkoutLog(){return [];}
+function buildLogContext(){return "";}
+function getChatContext(){return "";}
+function startLogFromPlan(wo){startLog(wo);}
+function q(){}
 function addMsg(role,txt){
   var el=document.getElementById("msgs");
-  var emp=el.querySelector(".emp"); if(emp)emp.remove();
   var d=document.createElement("div"); d.className="msg "+(role==="user"?"u":"a");
   var av=document.createElement("div"); av.className="av"; av.textContent=role==="user"?"M":"AI";
   var bbl=document.createElement("div"); bbl.className="bbl"; bbl.textContent=txt;
-  d.appendChild(av); d.appendChild(bbl);
-  el.appendChild(d); el.scrollTop=el.scrollHeight;
+  d.appendChild(av); d.appendChild(bbl); el.appendChild(d); el.scrollTop=el.scrollHeight;
 }
 async function sendMsg(){
-  var inp=document.getElementById("cin"); var txt=inp.value.trim(); if(!txt)return;
-  inp.value=""; addMsg("user",txt); chatHist.push({role:"user",content:txt});
+  var inp=document.getElementById("cin"); var txt=inp.value.trim();
+  if(!txt)return; inp.value=""; addMsg("user",txt);
   var btn=document.getElementById("sbtn"); btn.disabled=true; btn.textContent="...";
-  var sys="Expert strength coach. Full history: "+HISTORY+buildLogContext(activeCo||activeOv)+getChatContext()+". Former D1 soccer player, recreational soccer/running. Bilateral Achilles tendinopathy and hip flexor strain. Pull-Ups: neutral grip sets 1+3, wide grip sets 2+4, bodyweight. Be specific and concise.";
-  var msgs=chatHist.length===1?[{role:"user",content:sys+"\n\nQuestion: "+txt}]:[{role:"user",content:sys}].concat(chatHist);
   try{
-    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:msgs})});
-    var rdata=await r.json();
-    var reply=(rdata.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
-    addMsg("assistant",reply||"Something went wrong.");
-    chatHist.push({role:"assistant",content:reply});
-    try{
-      var chatLog=JSON.parse(localStorage.getItem("chatlog")||"[]");
-      chatLog.push({date:new Date().toISOString().split("T")[0],q:txt.slice(0,200),a:reply.slice(0,300)});
-      if(chatLog.length>30)chatLog=chatLog.slice(chatLog.length-30);
-      localStorage.setItem("chatlog",JSON.stringify(chatLog));
-    }catch(e){}
-  }catch(e){addMsg("assistant","Coach needs internet connection.");}
+    var r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":getApiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:800,messages:[{role:"user",content:txt}]})
+    });
+    var d=await r.json();
+    var reply=(d.content||[]).map(function(b){return b.text||"";}).join("");
+    addMsg("assistant",reply);
+  }catch(e){addMsg("assistant","Error: "+e.message);}
   btn.disabled=false; btn.textContent="Send";
 }
 
-var calYear=0, calMonth=0, calSelected="";
+// Calendar
+var calYear=0,calMonth=0,calSelected="";
 var WO_COLORS={"Push":"#2563eb","Legs":"#16a34a","Back":"#9333ea"};
-
 function getWorkoutDates(){
   var map={};
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wo){
-    // From baked-in chart data (full history)
     var chartWo=CHART_WEIGHT[wo]||{};
-    Object.keys(chartWo).forEach(function(ex){
-      (chartWo[ex]||[]).forEach(function(p){if(p.d)map[p.d]=wo;});
-    });
-    // From LAST
+    Object.keys(chartWo).forEach(function(ex){(chartWo[ex]||[]).forEach(function(p){if(p.d)map[p.d]=wo;});});
     var lastWo=LAST[wo]||{};
-    Object.keys(lastWo).forEach(function(ex){
-      if(lastWo[ex].date) map[lastWo[ex].date]=wo;
-    });
-    // From storage
-    var storedWo=stored[wo]||{};
-    Object.keys(storedWo).forEach(function(ex){
-      (storedWo[ex]||[]).forEach(function(s){if(s.date)map[s.date]=wo;});
-    });
+    Object.keys(lastWo).forEach(function(ex){if(lastWo[ex].date)map[lastWo[ex].date]=wo;});
+    var sl=stored[wo]||{};
+    Object.keys(sl).forEach(function(ex){(sl[ex]||[]).forEach(function(s){if(s.date)map[s.date]=wo;});});
   });
   return map;
 }
-
 function initCal(){
-  var today=new Date();
-  calYear=today.getFullYear();
-  calMonth=today.getMonth();
+  var today=new Date(); calYear=today.getFullYear(); calMonth=today.getMonth();
   calSelected=today.toISOString().split("T")[0];
   document.getElementById("log-date").value=calSelected;
   renderCal();
 }
-function getEarliestWorkoutDate(){
-  var woDates=getWorkoutDates();
-  var dates=Object.keys(woDates).sort();
-  return dates.length?dates[0]:null;
-}
-
 function calNav(dir){
   calMonth+=dir;
   if(calMonth>11){calMonth=0;calYear++;}
   if(calMonth<0){calMonth=11;calYear--;}
   renderCal();
 }
-
 function renderCal(){
   var woDates=getWorkoutDates();
   var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   document.getElementById("cal-title").textContent=months[calMonth]+" "+calYear;
-  var grid=document.getElementById("cal-grid");
-  grid.innerHTML="";
-  // Day headers
-  ["S","M","T","W","T","F","S"].forEach(function(d){
-    var h=document.createElement("div");
-    h.textContent=d;
-    h.style.cssText="font-size:10px;color:#999;padding:2px 0;font-weight:600";
-    grid.appendChild(h);
-  });
+  var grid=document.getElementById("cal-grid"); grid.innerHTML="";
+  ["S","M","T","W","T","F","S"].forEach(function(d){var h=document.createElement("div");h.textContent=d;h.style.cssText="font-size:10px;color:#999;padding:2px 0;font-weight:600";grid.appendChild(h);});
   var firstDay=new Date(calYear,calMonth,1).getDay();
   var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   var today=new Date().toISOString().split("T")[0];
-  // Empty cells
-  for(var i=0;i<firstDay;i++){
-    var empty=document.createElement("div"); grid.appendChild(empty);
-  }
-  // Day cells
+  for(var i=0;i<firstDay;i++){var e=document.createElement("div");grid.appendChild(e);}
   for(var d=1;d<=daysInMonth;d++){
     var dateStr=calYear+"-"+String(calMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     var cell=document.createElement("div");
@@ -1159,31 +839,18 @@ function renderCal(){
     var isSelected=dateStr===calSelected;
     var isToday=dateStr===today;
     cell.textContent=d;
-    var bg="transparent";
-    var color="#1a1a1a";
-    var border="none";
-    var fontWeight="400";
+    var bg="transparent",color="#1a1a1a",border="none",fw="400";
     if(isSelected){bg="#1a1a1a";color="#fff";}
-    else if(woType){bg=WO_COLORS[woType];color="#fff";fontWeight="600";}
+    else if(woType){bg=WO_COLORS[woType];color="#fff";fw="600";}
     else if(isToday){border="1px solid #1a1a1a";}
-    cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fontWeight+";";
-    (function(ds, wo){
-      cell.onclick=function(){
-        calSelected=ds;
-        document.getElementById("log-date").value=ds;
-        renderCal();
-        // If this date had a workout, load that workout's log
-        if(wo){
-          loadLogForDate(ds, wo);
-        }
-      };
-    })(dateStr, woType);
+    cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fw+";";
+    (function(ds,wo){cell.onclick=function(){calSelected=ds;document.getElementById("log-date").value=ds;renderCal();if(wo)loadLogForDate(ds,wo);};})(dateStr,woType);
     grid.appendChild(cell);
   }
 }
 
-// On startup, load from cloud and merge with local storage
-(async function initFromStorage(){
+// Init
+(function(){
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wo){
     var sl=stored[wo]||{};
@@ -1191,14 +858,10 @@ function renderCal(){
       var sessions=sl[exName]||[];
       sessions.forEach(function(s){
         if(!LAST[wo])LAST[wo]={};
-        if(!LAST[wo][exName]||s.date>LAST[wo][exName].date){LAST[wo][exName]=s;}
+        if(!LAST[wo][exName]||s.date>LAST[wo][exName].date)LAST[wo][exName]=s;
         var sets=s.sets||[];
         var weights=sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
         var maxW=weights.length?Math.max.apply(null,weights):0;
-        var vol=sets.reduce(function(a,st){return a+(st.reps&&st.weight&&st.weight>10?st.reps*st.weight:0);},0);
-        var e1rm=sets.reduce(function(best,st){if(!st.reps||!st.weight||st.weight<=10)return best;var e=st.weight*(1+st.reps/30);return e>best?e:best;},0);
-        var isBW=(exName==="Pull-Ups"||exName==="Chest Dips");
-        var bwTotal=isBW?sets.reduce(function(a,st){return a+(st.reps||0);},0):0;
         function upsert(obj,wo,name,d,val){
           if(!val)return;
           if(!obj[wo])obj[wo]={};
@@ -1208,24 +871,16 @@ function renderCal(){
           if(ei>=0)pts[ei].w=Math.round(val);else pts.push({d:d,w:Math.round(val)});
           pts.sort(function(a,b){return a.d.localeCompare(b.d);});
         }
-        if(!isBW){upsert(CHART_WEIGHT,wo,exName,s.date,maxW);upsert(CHART_VOLUME,wo,exName,s.date,vol);upsert(CHART_E1RM,wo,exName,s.date,e1rm);}
-        else{
-          if(bwTotal){
-            if(!CHART_BW[exName])CHART_BW[exName]=[];
-            var bwPts=CHART_BW[exName];
-            var bei=bwPts.findIndex(function(p){return p.d===s.date;});
-            if(bei>=0)bwPts[bei].w=bwTotal;else bwPts.push({d:s.date,w:bwTotal});
-            bwPts.sort(function(a,b){return a.d.localeCompare(b.d);});
-          }
-        }
+        if(exName!=="Pull-Ups"&&exName!=="Chest Dips")upsert(CHART_WEIGHT,wo,exName,s.date,maxW);
       });
     });
   });
 })();
 buildMetrics();
-mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;console.log("OV PILL CLICKED: "+n+" LAST keys: "+Object.keys(getLastForWorkout(n)).join(","));renderOv();});
+mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
-mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache={};loadRecs(n);});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;loadRecs(n);});
 renderOv();
 renderChart();
-buildLogMeta();;
+buildLogMeta();
+;
