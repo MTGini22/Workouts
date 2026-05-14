@@ -326,18 +326,41 @@ function buildMetrics(){
 }
 function renderOv(){
   var last=getLastForWorkout(activeOv);
-  var chart=CHART[activeOv]||{};
-  console.log("renderOv v2 wo="+activeOv+" last="+Object.keys(last).length+" chart="+Object.keys(chart).length);
-  // Also include any exercises in chart data not yet in last
+  // Add ALL exercises from full chart history
+  var chart=CHART_WEIGHT[activeOv]||{};
   Object.keys(chart).forEach(function(name){
     if(!last[name]){
       var pts=chart[name]||[];
       if(pts.length) last[name]={date:pts[pts.length-1].d,sets:[{reps:null,weight:pts[pts.length-1].w}]};
     }
   });
+  // Add BW exercises
+  Object.keys(CHART_BW).forEach(function(bwName){
+    var belongsTo=(bwName==="Pull-Ups")?"Back":"Push";
+    if(activeOv===belongsTo&&!last[bwName]){
+      var pts=CHART_BW[bwName]||[];
+      if(pts.length) last[bwName]={date:pts[pts.length-1].d,sets:[{reps:pts[pts.length-1].w,weight:null}]};
+    }
+  });
+  // Pull from LAST directly too
+  if(LAST[activeOv]){
+    Object.keys(LAST[activeOv]).forEach(function(name){
+      if(!last[name]) last[name]=LAST[activeOv][name];
+    });
+  }
+  // Sort in canonical order
+  var order=EX_ORDER[activeOv]||[];
+  var names=Object.keys(last);
+  names.sort(function(a,b){
+    var ai=order.indexOf(a); var bi=order.indexOf(b);
+    if(ai===-1&&bi===-1) return a.localeCompare(b);
+    if(ai===-1) return 1; if(bi===-1) return -1;
+    return ai-bi;
+  });
   var list=document.createElement("div"); list.className="exlist";
-  Object.keys(last).forEach(function(name){
-    var sess=last[name]; var pts=chart[name]||[];
+  names.forEach(function(name){
+    var sess=last[name];
+    var pts=(CHART_WEIGHT[activeOv]||{})[name]||[];
     var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
     var cls=diff>0?"up":diff<-5?"dn":"fl";
     var sym=diff>0?"↑":diff<-5?"↓":"→";
@@ -643,6 +666,15 @@ function startLog(wo){
 
   // Update WOS for this workout to match
   if(exerciseList.length) WOS[wo]=exerciseList;
+
+  // Sort in canonical order
+  var order=EX_ORDER[wo]||[];
+  exerciseList.sort(function(a,b){
+    var ai=order.indexOf(a); var bi=order.indexOf(b);
+    if(ai===-1&&bi===-1) return a.localeCompare(b);
+    if(ai===-1) return 1; if(bi===-1) return -1;
+    return ai-bi;
+  });
 
   exerciseList.forEach(function(exName){
     var base=lastData[exName];
