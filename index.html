@@ -340,7 +340,8 @@ function renderOv(){
     var fW=pts.length?pts[0].w:0; var lW=pts.length?pts[pts.length-1].w:0; var diff=lW-fW;
     var cls=diff>0?"up":diff<-5?"dn":"fl";
     var sym=diff>0?"↑":diff<-5?"↓":"→";
-    var diffStr=name==="Pull-Ups"?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
+    var isBWex=(name==="Pull-Ups"||name==="Chest Dips");
+    var diffStr=isBWex?"BW":diff!==0?(diff>0?"+":"")+Math.round(diff)+"lb":"—";
     var row=document.createElement("div"); row.className="exrow";
     var left=document.createElement("div"); left.style.minWidth="0";
     var nm=document.createElement("div"); nm.className="exn"; nm.textContent=name;
