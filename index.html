@@ -202,9 +202,31 @@ var _mem={};
 function getApiKey(){var k=["sk-ant-api03-NsN9jT4","AdWF74d7MlCAbxeEXNQu","H0jdb68z_v-cK5ywOOFr24k-PGUUYtDIC249jacHp6BkACVTkl3jLZL5MWA-XVgF7QAA"].join("");return k;}
 function saveApiKey(k){localStorage.setItem("ak",k);}
 
-// Cloud sync disabled - Supabase network restriction issue
-// Sync is handled via localStorage only for now
-async function cloudSave(data){return false;}
-async function cloudLoad(){return null;}
-function getSupaClient(){return null;}
+// Cloud sync via JSONBin.io
+var JBIN_ID="6a05dd52c0954111d8223710";
+var JBIN_KEY="$2a$10$h4X0yhvBJKxbCWIyTYIcv.U7pgv4MoPgNczWPqFAU6bjr5S4DbcsC";
+
+async function cloudSave(data){
+  try{
+    var resp=await fetch("https://api.jsonbin.io/v3/b/"+JBIN_ID,{
+      method:"PUT",
+      headers:{"X-Master-Key":JBIN_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify(data)
+    });
+    if(!resp.ok){var t=await resp.text();console.error("Bin save error:",resp.status,t);return false;}
+    return true;
+  }catch(e){console.error("Bin save failed:",e.message);return false;}
+}
+
+async function cloudLoad(){
+  try{
+    var resp=await fetch("https://api.jsonbin.io/v3/b/"+JBIN_ID+"/latest",{
+      headers:{"X-Master-Key":JBIN_KEY}
+    });
+    if(!resp.ok){console.error("Bin load error:",resp.status);return null;}
+    var d=await resp.json();
+    if(d&&d.record&&Object.keys(d.record).length>0&&!d.record.workouts) return d.record;
+  }catch(e){console.error("Bin load failed:",e.message);}
+  return null;
+}
 >
