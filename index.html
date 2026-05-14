@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Workout Tracker v3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f2;color:#1a1a1a;font-size:14px}
@@ -208,8 +208,14 @@ var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var SUPA_USER="mattmangini_workouts";
 var _supaClient=null;
 function getSupaClient(){
-  if(!_supaClient&&window.supabase){
-    _supaClient=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+  if(!_supaClient){
+    var lib=window.supabase||window.Supabase;
+    if(lib&&lib.createClient){
+      _supaClient=lib.createClient(SUPA_URL,SUPA_KEY);
+      console.log("Supabase client created");
+    } else {
+      console.error("Supabase library not loaded. window.supabase=",typeof window.supabase);
+    }
   }
   return _supaClient;
 }
