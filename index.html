@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v38</title>
+<title>Workout Tracker v39</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -637,7 +637,7 @@ function startLog(wo){
   // Override with anything newer from storage
   var storedWo=stored[wo]||{};
   Object.keys(storedWo).forEach(function(exName){
-    var sessions=storedWo[exName]||[];
+    var sessions=(storedWo[exName]||[]).filter(function(s){return !s._placeholder&&s.sets&&s.sets.length>0;});
     if(!sessions.length) return;
     sessions.sort(function(a,b){return b.date.localeCompare(a.date);});
     var newest=sessions[0];
@@ -655,7 +655,7 @@ function startLog(wo){
       if(lastData[exName].date) allDates.push(lastData[exName].date);
     });
     Object.keys(storedWo).forEach(function(exName){
-      var ss=storedWo[exName]||[];
+      var ss=(storedWo[exName]||[]).filter(function(s){return !s._placeholder&&s.sets&&s.sets.length>0;});
       ss.forEach(function(s){if(s.date) allDates.push(s.date);});
     });
     allDates.sort();
@@ -666,7 +666,7 @@ function startLog(wo){
       if(lastData[exName].date===mostRecent) exWithDates.push(exName);
     });
     Object.keys(storedWo).forEach(function(exName){
-      var ss=storedWo[exName]||[];
+      var ss=(storedWo[exName]||[]).filter(function(s){return !s._placeholder&&s.sets&&s.sets.length>0;});
       ss.forEach(function(s){
         if(s.date===mostRecent&&exWithDates.indexOf(exName)<0) exWithDates.push(exName);
       });
