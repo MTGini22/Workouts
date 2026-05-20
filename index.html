@@ -969,6 +969,18 @@ async function sendMsg(){
         saveMeta(meta2);
         if(WOS[upd.workout])WOS[upd.workout]=WOS[upd.workout].map(function(e){return e===upd.ban?upd.replace:e;});
         recsCache[upd.workout]=null;
+        // Update currentPlan and persist to JSONBin so phone picks it up
+        if(currentPlan[upd.workout]){
+          currentPlan[upd.workout]=currentPlan[upd.workout].map(function(r){
+            if(r.exercise===upd.ban){
+              return Object.assign({},r,{exercise:upd.replace,reason:"Replaced due to injury: "+upd.note});
+            }
+            return r;
+          });
+          var st2=loadS();if(!st2._plans)st2._plans={};
+          st2._plans[upd.workout]={recs:currentPlan[upd.workout],ts:Date.now()};
+          saveS(st2);
+        }
       }catch(e2){console.log("injury parse error",e2);}
       reply=reply.replace(/<INJURY_UPDATE>.*?<\/INJURY_UPDATE>/,"").trim();
     }
