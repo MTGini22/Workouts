@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v34</title>
+<title>Workout Tracker v35</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -947,6 +947,19 @@ async function loadRecs(wo){
 }
 function validateRecs(wo,recs){return recs;}
 function renderRecs(wo,recs){
+  // Deduplicate -- if AI returns same exercise twice, merge into one card (keep the working sets version)
+  var seen={};
+  recs=recs.filter(function(r){
+    if(!r.exercise)return false;
+    var key=r.exercise.toLowerCase().trim();
+    if(seen[key]){
+      // Keep the one with more content in target (working sets version)
+      if((r.target||"").length>(seen[key].target||"").length)seen[key]=r;
+      return false;
+    }
+    seen[key]=r;
+    return true;
+  });
   currentPlan[wo]=recs;
   WOS[wo]=recs.map(function(r){return r.exercise;});
   var el=document.getElementById("co-recs");
@@ -1176,7 +1189,7 @@ syncFromCloud();
 buildMetrics();
 mkPills("ov-pills",["Push","Legs","Back"],activeOv,function(n){activeOv=n;renderOv();});
 mkPills("pr-pills",["Push","Legs","Back"],activePr,function(n){activePr=n;renderChart();});
-mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;loadRecs(n);});
+mkPills("co-pills",["Push","Legs","Back"],null,function(n){activeCo=n;recsCache[n]=null;loadRecs(n);});
 renderOv();
 renderChart();
 buildLogMeta();
