@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v41</title>
+<title>Workout Tracker v43</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -154,6 +154,7 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
       </div>
       <div id="log-exs"></div>
       <button class="savebtn" onclick="saveSession()">Complete workout</button>
+      <button id="deletebtn" onclick="deleteWorkout()" style="display:none;width:100%;padding:11px;background:none;border:1px solid #dc2626;border-radius:11px;color:#dc2626;font-size:13px;font-weight:500;cursor:pointer;margin-top:8px;font-family:inherit">Delete this workout</button>
     </div>
   </div>
   <div id="tc-co" class="tc">
@@ -486,11 +487,8 @@ function loadLogForDate(date, wo){
   var stored2=loadS();
   var isPlaceholder=false;
   var storedWo2=stored2[wo]||{};
-  Object.keys(storedWo2).forEach(function(ex){
-    (storedWo2[ex]||[]).forEach(function(s){
-      if(s.date===date&&s._placeholder)isPlaceholder=true;
-    });
-  });
+  var activeEntries=storedWo2["__active"]||[];
+  activeEntries.forEach(function(s){if(s.date===date&&s._placeholder)isPlaceholder=true;});
   if(isPlaceholder){
     // Plan approved - open log form for this date
     startLog(wo);
@@ -516,8 +514,9 @@ function loadLogForDate(date, wo){
     if(bi===-1) return -1;
     return ai-bi;
   });
-  // Historical date - hide Complete button
+  // Historical date - hide Complete button, show Delete
   document.querySelector(".savebtn").style.display="none";
+  var dbtn=document.getElementById("deletebtn");if(dbtn)dbtn.style.display="block";
   exsOnDate.forEach(function(ex){
     var exName=ex.name; var sess=ex.session;
     var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
@@ -619,9 +618,15 @@ function startLog(wo){
   document.getElementById("log-home").style.display="none";
   document.getElementById("log-form").classList.add("show");
   document.querySelector(".savebtn").style.display="block";
+  var _dbtn=document.getElementById("deletebtn");if(_dbtn)_dbtn.style.display="block";
   document.getElementById("okmsg").style.display="none";
   initCal();
   var stored=loadS();
+  // Always restore currentPlan from storage so targets show on any device
+  if(!currentPlan[wo]&&stored._plans&&stored._plans[wo]&&stored._plans[wo].recs){
+    currentPlan[wo]=stored._plans[wo].recs;
+    WOS[wo]=currentPlan[wo].map(function(r){return r.exercise;});
+  }
   var c=document.getElementById("log-exs"); c.innerHTML="";
 
   // Build exercise list from last session — always use most recent logged exercises
@@ -693,13 +698,21 @@ function startLog(wo){
     var anchorSets=workoutMode==="long"?5:4;
     var ls=last?last.sets:[];
     ls=ls.filter(function(s){return s.reps||s.weight;});
-    var n=isAnchor?anchorSets:Math.max(ls.length,isPU?4:3);
+    // Mode-based default set count
+    var modeSets=workoutMode==="mini"?2:workoutMode==="long"?4:3;
+    // Look up plan rec first so we can use it for set count on new exercises
+    var planRec=currentPlan[wo]?currentPlan[wo].find(function(r){return r.exercise===exName;}):null;
+    var planSetCount=0;
+    if(!ls.length&&planRec&&planRec.target){
+      var tMatch=planRec.target.match(/(\d+)\s*(?:sets|x)/i);
+      if(tMatch)planSetCount=parseInt(tMatch[1])||0;
+    }
+    var n=isAnchor?anchorSets:Math.max(ls.length,planSetCount||0,isPU?4:modeSets);
     var prev=ls.length?fmtS(ls):"";
     var block=document.createElement("div"); block.className="ex-block";
     var head=document.createElement("div"); head.className="ex-head";
     var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
     var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
-    var planRec=currentPlan[wo]?currentPlan[wo].find(function(r){return r.exercise===exName;}):null;
     var targetLine=planRec&&planRec.target?"<span style=\'color:#16a34a;font-weight:600;display:block\'>Target: "+planRec.target+"</span>":"";
     prevSpan.innerHTML=(prev?"<span style=\'color:#999\'>Last: "+prev+"</span><br>":"")+targetLine;
     head.appendChild(nameSpan); head.appendChild(prevSpan);
@@ -739,6 +752,21 @@ function backToHome(){
   logWo=null;
   document.getElementById("log-home").style.display="block";
   document.getElementById("log-form").classList.remove("show");
+  var dbtn=document.getElementById("deletebtn");if(dbtn)dbtn.style.display="none";
+}
+function deleteWorkout(){
+  var date=document.getElementById("log-date").value;
+  if(!date||!logWo)return;
+  if(!confirm("Delete "+logWo+" workout on "+date+"?"))return;
+  var stored=loadS();
+  if(stored[logWo]){
+    Object.keys(stored[logWo]).forEach(function(ex){
+      stored[logWo][ex]=(stored[logWo][ex]||[]).filter(function(s){return s.date!==date;});
+    });
+  }
+  saveS(stored);
+  backToHome();
+  renderCal();buildMetrics();renderOv();renderChart();buildLogMeta();
 }
 function saveSession(){
   var date=document.getElementById("log-date").value;
@@ -768,6 +796,9 @@ function saveSession(){
       saved++;
     }
   });
+  if(stored[logWo]&&stored[logWo]["__active"]){
+    stored[logWo]["__active"]=stored[logWo]["__active"].filter(function(s){return s.date!==date;});
+  }
   saveS(stored);
   recsCache[logWo]=null;
   // Update CHART
@@ -1008,15 +1039,12 @@ function renderRecs(wo,recs){
     var today=new Date().toISOString().split("T")[0];
     if(!st[wo])st[wo]={};
     var alreadyLogged=Object.keys(st[wo]).some(function(ex){
-      return (st[wo][ex]||[]).some(function(s){return s.date===today&&!s._placeholder;});
+      return ex!=="__active"&&(st[wo][ex]||[]).some(function(s){return s.date===today&&!s._placeholder;});
     });
     if(!alreadyLogged){
-      var firstEx=recs[0]&&recs[0].exercise;
-      if(firstEx){
-        if(!st[wo][firstEx])st[wo][firstEx]=[];
-        st[wo][firstEx]=st[wo][firstEx].filter(function(s){return s.date!==today;});
-        st[wo][firstEx].push({date:today,sets:[],_placeholder:true});
-      }
+      if(!st[wo]["__active"])st[wo]["__active"]=[];
+      st[wo]["__active"]=st[wo]["__active"].filter(function(s){return s.date!==today;});
+      st[wo]["__active"].push({date:today,sets:[],_placeholder:true});
     }
     saveS(st);
     tab("log");
