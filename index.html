@@ -213,7 +213,6 @@ var WOS={
   Back:["Barbell Deadlift","Pull-Ups","Face Pulls","Single Arm Dumbbell Row","Cable Lat Pulldown","Barbell Shrugs","Dumbbell Reverse Fly"]
 };
 var _mem={};
-function getApiKey(){return ["sk-ant-api03-WVwtr1T","NGDZa-2v71i25iAo522u","BJTTjzMnjONfLOlauBwLB_o_mNQHivCp4L2ONhow-DsCwsU4EjYEJF_yS2A-dDrSHwAA"].join("");}
 
 
 var EX_ORDER={
@@ -224,8 +223,6 @@ var EX_ORDER={
 var activeOv="Push", activePr="Push", activeCo=null;
 var currentPlan={};
 var workoutMode="normal";
-function loadS(){try{var v=localStorage.getItem("wt3");return v?JSON.parse(v):_mem;}catch(e){return _mem;}}
-function saveS(h){_mem=h;try{localStorage.setItem("wt3",JSON.stringify(h));}catch(e){}}
 function fmtS(sets){
   return sets.map(function(st){
     var g=st.grip?"("+st.grip[0]+") ":"";
@@ -672,7 +669,9 @@ function startLog(wo){
     var head=document.createElement("div"); head.className="ex-head";
     var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
     var prevSpan=document.createElement("span"); prevSpan.className="ex-prev";
-    prevSpan.textContent=prev?"Last: "+prev:"No data";
+    var planRec=currentPlan[wo]?currentPlan[wo].find(function(r){return r.exercise===exName;}):null;
+    var targetLine=planRec&&planRec.target?"<span style=\'color:#16a34a;font-weight:600;display:block\'>Target: "+planRec.target+"</span>":"";
+    prevSpan.innerHTML=(prev?"<span style=\'color:#999\'>Last: "+prev+"</span><br>":"")+targetLine;
     head.appendChild(nameSpan); head.appendChild(prevSpan);
     var setrows=document.createElement("div"); setrows.className="setrows";
     for(var i=0;i<n;i++){
@@ -837,6 +836,18 @@ async function syncFromCloud(){
     try{localStorage.setItem("wt3",JSON.stringify(local));}catch(e){}
     buildMetrics();renderOv();renderChart();buildLogMeta();
   }
+  // Sync saved plans across devices
+  if(remote&&remote._plans){
+    var ls2=loadS();if(!ls2._plans)ls2._plans={};
+    Object.keys(remote._plans).forEach(function(wo){
+      var rp=remote._plans[wo];var lp=ls2._plans[wo];
+      if(!lp||(rp&&rp.ts>lp.ts)){
+        ls2._plans[wo]=rp;currentPlan[wo]=rp.recs;
+        WOS[wo]=rp.recs.map(function(r){return r.exercise;});
+      }
+    });
+    _mem=ls2;try{localStorage.setItem("wt3",JSON.stringify(ls2));}catch(e){}
+  }
 }
 function setMode(m){
   workoutMode=m;
@@ -887,7 +898,11 @@ function renderRecs(wo,recs){
   });
   var btn=document.createElement("button"); btn.className="looks-good-btn";
   btn.textContent="Looks good -> Start logging";
-  btn.onclick=function(){tab("log");startLog(wo);};
+  btn.onclick=function(){
+    var st=loadS();if(!st._plans)st._plans={};
+    st._plans[wo]={recs:recs,ts:Date.now()};saveS(st);
+    tab("log");startLog(wo);
+  };
   el.appendChild(btn);
 }
 function fetchTutorial(){}
@@ -1052,6 +1067,9 @@ function renderCal(){
   });
 })();
 syncFromCloud();
+(function(){
+  var st=loadS();if(st&&st._plans){Object.keys(st._plans).forEach(function(wo){var p=st._plans[wo];if(p&&p.recs){currentPlan[wo]=p.recs;WOS[wo]=p.recs.map(function(r){return r.exercise;});}});}
+})();
 (function(){
   var meta=loadMeta();var hist=meta.chatHist||[];
   chatHist=hist.map(function(m){return {role:m.role,content:m.content};});
