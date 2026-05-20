@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v37</title>
+<title>Workout Tracker v38</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -686,9 +686,12 @@ function startLog(wo){
       if(!last||sl[0].date>last.date) last=sl[0];
     }
     var isPU=exName==="Pull-Ups"; var isBW=["Chest Dips","Pull-Ups"].indexOf(exName)>=0;
+    var isAnchor=["Bench Press","Barbell Squat","Barbell Deadlift"].indexOf(exName)>=0;
+    var anchorSets=workoutMode==="long"?5:4;
     var ls=last?last.sets:[];
-    var n=Math.max(ls.length,isPU?4:3);
-    var prev=last?fmtS(last.sets):"";
+    ls=ls.filter(function(s){return s.reps||s.weight;});
+    var n=isAnchor?anchorSets:Math.max(ls.length,isPU?4:3);
+    var prev=ls.length?fmtS(ls):"";
     var block=document.createElement("div"); block.className="ex-block";
     var head=document.createElement("div"); head.className="ex-head";
     var nameSpan=document.createElement("span"); nameSpan.textContent=exName;
@@ -705,7 +708,8 @@ function startLog(wo){
       var grip=isPU?PU_GRIPS[i]:"";
       var gt=grip?"<span class=\"gtag\">"+grip+"</span>":"";
       var row=document.createElement("div"); row.className="setrow";
-      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent="Set "+(i+1);
+      var setLabel=isAnchor&&i===0?"Warmup":"Set "+(isAnchor?i:i+1);
+      var lbl=document.createElement("span"); lbl.className="slbl"; lbl.textContent=setLabel;
       row.appendChild(lbl);
       if(isPU){var gtEl=document.createElement("span");gtEl.className="gtag";gtEl.textContent=PU_GRIPS[i]||"Neutral";row.appendChild(gtEl);}
       var rInput=document.createElement("input");
