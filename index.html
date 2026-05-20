@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v30</title>
+<title>Workout Tracker v32</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -480,8 +480,23 @@ function loadLogForDate(date, wo){
       if(lastWo[exName].date===date) exsOnDate.push({name:exName,session:lastWo[exName]});
     });
   }
+  // Check if this date has a placeholder (plan approved but not yet logged)
+  var stored2=loadS();
+  var isPlaceholder=false;
+  var storedWo2=stored2[wo]||{};
+  Object.keys(storedWo2).forEach(function(ex){
+    (storedWo2[ex]||[]).forEach(function(s){
+      if(s.date===date&&s._placeholder)isPlaceholder=true;
+    });
+  });
+  if(isPlaceholder){
+    // Plan approved - open log form for this date
+    startLog(wo);
+    document.getElementById("log-date").value=date;
+    return;
+  }
   if(!exsOnDate.length){
-    // No data for this date - show blank, don't trigger a new log
+    // No data for this date - show blank
     document.getElementById("log-home").style.display="none";
     document.getElementById("log-form").classList.add("show");
     document.getElementById("okmsg").style.display="none";
@@ -786,7 +801,7 @@ async function cloudSave(d){
     var r=await fetch("https://api.jsonbin.io/v3/b/"+JSONBIN_ID,{
       method:"PUT",
       headers:{"Content-Type":"application/json","X-Master-Key":JSONBIN_KEY,"X-Bin-Versioning":"false"},
-      body:JSON.stringify({Push:d.Push||{},Legs:d.Legs||{},Back:d.Back||{}})
+      body:JSON.stringify({Push:d.Push||{},Legs:d.Legs||{},Back:d.Back||{},_meta:d._meta||{},_plans:d._plans||{}})
     });
     return r.ok;
   }catch(e){return false;}
