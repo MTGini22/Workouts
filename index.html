@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v45</title>
+<title>Workout Tracker v46</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -280,6 +280,7 @@ function getLastForWorkout(wo){
   var last=JSON.parse(JSON.stringify(LAST[wo]||{}));
   var sl=stored[wo]||{};
   Object.keys(sl).forEach(function(en){
+    if(en==="__active")return; // skip placeholder key
     var ss=sl[en];
     if(!ss||!ss.length)return;
     // Skip placeholder entries - only use real logged sessions
@@ -304,14 +305,28 @@ function buildMetrics(){
     });
     return max;
   }
+  // Get first working weight (>135lb) from chart data
+  function getFirstWorking(wo,exName){
+    var pts=(CHART_WEIGHT[wo]||{})[exName]||[];
+    for(var i=0;i<pts.length;i++){if(pts[i].w>135)return pts[i].w;}
+    return null;
+  }
   var dl=getMax("Back","Barbell Deadlift");
   var sq=getMax("Legs","Barbell Squat");
   var bp=getMax("Push","Bench Press");
+  var dlFirst=getFirstWorking("Back","Barbell Deadlift");
+  var sqFirst=getFirstWorking("Legs","Barbell Squat");
+  var bpFirst=getFirstWorking("Push","Bench Press");
   var el=document.getElementById("ov-metrics");
   el.innerHTML="";
-  [["Deadlift",dl,"135"],["Squat",sq,"135"],["Bench",bp,"working sets"]].forEach(function(row){
+  [
+    ["Deadlift",dl,dlFirst],
+    ["Squat",sq,sqFirst],
+    ["Bench",bp,bpFirst]
+  ].forEach(function(row){
     var d=document.createElement("div"); d.className="mc";
-    d.innerHTML="<div class='ml'>"+row[0]+"</div><div class='mv'>"+row[1]+"lb</div><div class='ms'>up from "+row[2]+"lb</div>";
+    var sub=row[2]?"up from "+row[2]+"lb":"first recorded: "+row[1]+"lb";
+    d.innerHTML="<div class='ml'>"+row[0]+"</div><div class='mv'>"+row[1]+"lb</div><div class='ms'>"+sub+"</div>";
     el.appendChild(d);
   });
 }
@@ -1084,7 +1099,19 @@ function buildCoachSystemPrompt(){
   var notes=(meta.notes||[]);
   var injStr=injuries.length?"\n\nKNOWN INJURIES/RESTRICTIONS:\n"+injuries.map(function(i){return "- "+i;}).join("\n"):"";
   var notStr=notes.length?"\n\nCOACH NOTES:\n"+notes.map(function(n){return "- "+n;}).join("\n"):"";
-  return "You are a personal trainer and strength coach with full knowledge of this athlete:\n\n"+COACH_CONTEXT+injStr+notStr+"\n\nYou remember everything discussed. Be concise and practical.\n\nIf the athlete reports pain or injury with any exercise:\n1. Acknowledge with empathy\n2. Remove that exercise from the program\n3. Suggest a replacement that avoids the same movement pattern and pairs well with its superset partner\n4. End with this exact block so the app can update automatically:\n<INJURY_UPDATE>{\"ban\":\"Exercise Name\",\"replace\":\"New Exercise Name\",\"workout\":\"Push\",\"note\":\"brief reason\"}</INJURY_UPDATE>";
+  // Include actual latest session data for all workouts
+  var sessionStr="\n\nATHLETE CURRENT DATA:\n";
+  ["Push","Legs","Back"].forEach(function(wo){
+    var last=getLastForWorkout(wo);
+    var exKeys=Object.keys(last);
+    if(!exKeys.length)return;
+    sessionStr+="\n"+wo+" (last session):\n";
+    exKeys.forEach(function(ex){
+      var s=last[ex];
+      sessionStr+="  "+ex+": "+fmtS(s.sets)+" on "+s.date+"\n";
+    });
+  });
+  return "You are a personal trainer and strength coach with full knowledge of this athlete:\n\n"+COACH_CONTEXT+injStr+notStr+sessionStr+"\n\nYou remember everything discussed. Be concise and practical.\n\nIf the athlete reports pain or injury with any exercise:\n1. Acknowledge with empathy\n2. Remove that exercise from the program\n3. Suggest a replacement that avoids the same movement pattern and pairs well with its superset partner\n4. End with this exact block so the app can update automatically:\n<INJURY_UPDATE>{\"ban\":\"Exercise Name\",\"replace\":\"New Exercise Name\",\"workout\":\"Push\",\"note\":\"brief reason\"}</INJURY_UPDATE>";
 }
 async function sendMsg(){
   var inp=document.getElementById("cin"); var txt=inp.value.trim();
