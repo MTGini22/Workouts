@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v52</title>
+<title>Workout Tracker v53</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1363,6 +1363,29 @@ function renderCal(){
 syncFromCloud();
 (function(){
   var st=loadS();if(st&&st._plans){Object.keys(st._plans).forEach(function(wo){var p=st._plans[wo];if(p&&p.recs){currentPlan[wo]=p.recs;WOS[wo]=p.recs.map(function(r){return r.exercise;});}});}
+})();
+// Force correct Back template if stored plan has old exercises
+(function(){
+  var CORRECT_BACK=[
+    {exercise:"Barbell Deadlift",target:"1 warmup @ 135lb + 3 sets x 6 reps @ 255lb",action:"anchor",reason:"Last: 3x6 @ 250lb. Hit all reps. Increase 5lb."},
+    {exercise:"Pull-Ups",target:"4 sets to failure (N/W/N/W)",action:"anchor",reason:"Always 4 sets alternating grip."},
+    {exercise:"Face Pulls",target:"[Pair A] 3 sets x 13 reps @ 44lb",action:"Updated",reason:"Moved to Pair A with Pull-Ups. Last: 3x12 @ 44lb. Add 1 rep."},
+    {exercise:"Chest-Supported Dumbbell Row",target:"[Pair B] 3 sets x 8 reps @ 57.5lb",action:"Updated",reason:"Last: 3x8 @ 55lb. Hit all reps. Increase 2.5lb."},
+    {exercise:"Cable Lat Pulldown",target:"[Pair B] 3 sets x 8 reps @ 134lb",action:"Updated",reason:"Last: 3x8 @ 131lb. Hit all reps. Increase 3lb."},
+    {exercise:"Barbell Shrugs",target:"[Pair C] 3 sets x 15 reps @ 75lb",action:"Updated",reason:"Last: 3x15 @ 70lb. Hit all reps. Increase 5lb."},
+    {exercise:"Dumbbell Reverse Fly",target:"[Pair C] 3 sets x 15 reps @ 22.5lb",action:"Updated",reason:"Last: 3x15 @ 20lb. Hit all reps. Increase 2.5lb."}
+  ];
+  var OLD_EXERCISES=["Meadows Row","Dead Hang","Single Arm Dumbbell Row"];
+  var backPlan=currentPlan["Back"]||[];
+  var hasOld=backPlan.some(function(r){return OLD_EXERCISES.indexOf(r.exercise)>=0;});
+  var missingNew=!backPlan.some(function(r){return r.exercise==="Chest-Supported Dumbbell Row";});
+  if(hasOld||missingNew){
+    currentPlan["Back"]=CORRECT_BACK;
+    WOS["Back"]=CORRECT_BACK.map(function(r){return r.exercise;});
+    var st=loadS();if(!st._plans)st._plans={};
+    st._plans["Back"]={recs:CORRECT_BACK,ts:Date.now()};
+    saveS(st);
+  }
 })();
 (function(){
   var meta=loadMeta();var hist=meta.chatHist||[];
