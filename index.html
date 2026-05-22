@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v51</title>
+<title>Workout Tracker v52</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1183,6 +1183,14 @@ async function sendMsg(){
     var wuMatch;
     var anyUpdated=false;
     if(activeCo){
+      // Restore plan from storage if not in memory
+      if(!currentPlan[activeCo]||!currentPlan[activeCo].length){
+        var storedForPlan=loadS();
+        if(storedForPlan._plans&&storedForPlan._plans[activeCo]&&storedForPlan._plans[activeCo].recs){
+          currentPlan[activeCo]=storedForPlan._plans[activeCo].recs;
+          WOS[activeCo]=currentPlan[activeCo].map(function(r){return r.exercise;});
+        }
+      }
       if(!currentPlan[activeCo])currentPlan[activeCo]=[];
       while((wuMatch=wuRegex.exec(reply))!==null){
         try{
