@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v50</title>
+<title>Workout Tracker v51</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1178,32 +1178,50 @@ async function sendMsg(){
     var d=await r.json();
     var reply=(d.content||[]).map(function(b){return b.text||"";}).join("");
     // Handle workout update requests
-    var wuMatch=reply.match(/<WORKOUT_UPDATE>(.*?)<\/WORKOUT_UPDATE>/);
-    if(wuMatch){
-      try{
-        var wu=JSON.parse(wuMatch[1].trim());
-        if(wu.exercise&&wu.target&&activeCo&&currentPlan[activeCo]){
-          // Update the plan in memory
-          var updated=false;
+    // Handle ALL workout updates (there may be multiple)
+    var wuRegex=/<WORKOUT_UPDATE>([\s\S]*?)<\/WORKOUT_UPDATE>/g;
+    var wuMatch;
+    var anyUpdated=false;
+    if(activeCo){
+      if(!currentPlan[activeCo])currentPlan[activeCo]=[];
+      while((wuMatch=wuRegex.exec(reply))!==null){
+        try{
+          var wu=JSON.parse(wuMatch[1].trim());
+          if(!wu.exercise)continue;
+          // Remove action: empty target = remove exercise
+          if(!wu.target||wu.action==="Removed"){
+            currentPlan[activeCo]=currentPlan[activeCo].filter(function(r){
+              return r.exercise!==wu.exercise;
+            });
+            WOS[activeCo]=(WOS[activeCo]||[]).filter(function(e){return e!==wu.exercise;});
+            anyUpdated=true;
+            continue;
+          }
+          // Update existing or add new exercise
+          var found=false;
           currentPlan[activeCo]=currentPlan[activeCo].map(function(r){
             if(r.exercise===wu.exercise){
-              updated=true;
+              found=true;
               return Object.assign({},r,{target:wu.target,action:wu.action||r.action,reason:wu.reason||r.reason});
             }
             return r;
           });
-          if(updated){
-            // Re-render the recs with updated plan
-            renderRecs(activeCo,currentPlan[activeCo]);
-            // Save updated plan
-            var st=loadS();if(!st._plans)st._plans={};
-            st._plans[activeCo]={recs:currentPlan[activeCo],ts:Date.now()};
-            saveS(st);
+          if(!found){
+            // New exercise -- add it
+            currentPlan[activeCo].push({exercise:wu.exercise,target:wu.target,action:wu.action||"add",reason:wu.reason||""});
+            WOS[activeCo]=currentPlan[activeCo].map(function(r){return r.exercise;});
           }
-        }
-      }catch(e2){console.log("workout update parse error",e2);}
-      reply=reply.replace(/<WORKOUT_UPDATE>.*?<\/WORKOUT_UPDATE>/,"").trim();
+          anyUpdated=true;
+        }catch(e2){console.log("workout update parse error",e2);}
+      }
+      if(anyUpdated){
+        renderRecs(activeCo,currentPlan[activeCo]);
+        var st=loadS();if(!st._plans)st._plans={};
+        st._plans[activeCo]={recs:currentPlan[activeCo],ts:Date.now()};
+        saveS(st);
+      }
     }
+    reply=reply.replace(/<WORKOUT_UPDATE>[\s\S]*?<\/WORKOUT_UPDATE>/g,"").trim();
     var injMatch=reply.match(/<INJURY_UPDATE>(.*?)<\/INJURY_UPDATE>/);
     if(injMatch){
       try{
