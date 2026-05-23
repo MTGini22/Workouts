@@ -24,7 +24,7 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .ms{font-size:10px;color:#bbb;margin-top:2px}
 .pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
 .pill{padding:5px 13px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:#555}
-.pill.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.pill.on{background:#003087;color:#fff;border-color:#003087}
 .exlist{background:#fff;border-radius:12px;border:1px solid #e8e8e6;overflow:hidden;margin-bottom:12px}
 .exrow{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 13px;border-bottom:1px solid #f2f2f0;gap:8px}
 .exrow:last-child{border-bottom:none}
@@ -51,14 +51,14 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .gtag{font-size:10px;color:#777;background:#f0f0ee;border-radius:4px;padding:2px 5px;flex-shrink:0}
 .sin{flex:1;padding:7px 9px;border:1px solid #ddd;border-radius:7px;font-size:16px;font-family:inherit;outline:none;min-width:0}
 .sin:focus{border-color:#888}
-.savebtn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
+.savebtn{width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:3px;font-family:inherit}
 .backbtn{background:none;border:none;color:#666;font-size:13px;cursor:pointer;padding:0;margin-bottom:13px;display:block}
 .okmsg{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 13px;color:#166534;font-size:12px;margin-bottom:11px;display:none}
 .clbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:8px}
 .mode-bar{display:flex;gap:5px;margin-bottom:12px}
 .mode-btn{flex:1;padding:7px 4px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:11px;font-weight:500;color:#666;cursor:pointer;text-align:center}
-.mode-btn.mode-on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.looks-good-btn{width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:12px;font-family:inherit}
+.mode-btn.mode-on{background:#003087;color:#fff;border-color:#003087}
+.looks-good-btn{width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:500;cursor:pointer;margin-top:12px;font-family:inherit}
 .rec-actions{display:flex;gap:8px;margin-top:10px}
 .rec-act-btn{flex:1;padding:6px;border:1px solid #e8e8e6;border-radius:7px;background:#f4f4f2;font-size:11px;color:#555;cursor:pointer;font-family:inherit}
 .rec-act-btn:hover{background:#ebebea}
@@ -78,11 +78,11 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 .msg{display:flex;gap:6px}.msg.u{flex-direction:row-reverse}
 .bbl{max-width:84%;padding:8px 11px;border-radius:11px;font-size:13px;line-height:1.5;white-space:pre-wrap}
 .msg.a .bbl{background:#f4f4f2;border-radius:4px 11px 11px 11px}
-.msg.u .bbl{background:#1a1a1a;color:#fff;border-radius:11px 4px 11px 11px}
+.msg.u .bbl{background:#003087;color:#fff;border-radius:11px 4px 11px 11px}
 .av{width:22px;height:22px;border-radius:50%;background:#e5e5e3;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#666;flex-shrink:0;margin-top:2px}
 .irow{display:flex;gap:6px;padding:8px 9px;border-top:1px solid #e8e8e6}
 .cin{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;outline:none;resize:none;background:#fafaf8}
-.sbtn{background:#1a1a1a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.sbtn{background:#003087;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit}
 .sbtn:disabled{opacity:.4}
 .sp{display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -94,7 +94,7 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
 </head>
 <body>
 <div class="app">
-  <h1>Workout tracker</h1>
+  <h1>Workout Tracker</h1>
   <p class="sub">Aug 2025 &ndash; present &nbsp;&middot;&nbsp; Push / Legs / Back</p>
   <div class="tnav">
     <button class="tbtn on" id="btn-ov" onclick="tab('ov')">Overview</button>
@@ -165,7 +165,7 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
   <div id="tc-co" class="tc">
     <p class="clbl">Next session recommendations</p>
     <div class="pills" id="co-pills"></div>
-    <button onclick="forceRegen()" style="background:none;border:none;color:#999;font-size:11px;cursor:pointer;padding:2px 0;margin-bottom:6px;display:block">↺ Regenerate plan</button>
+    <button onclick="forceRegen()" style="background:none;border:none;color:#75B2DD;font-size:11px;cursor:pointer;padding:2px 0;margin-bottom:6px;display:block">↺ Regenerate plan</button>
     <div class="mode-bar">
       <button class="mode-btn" id="mode-mini" onclick="setMode('mini')">Mini (~30 min)</button>
       <button class="mode-btn mode-on" id="mode-normal" onclick="setMode('normal')">Normal (~50 min)</button>
@@ -244,7 +244,7 @@ var FULL_SESSIONS={"Push": {"2025-08-21": {"Bench Press": {"date": "2025-08-21",
                         "Dumbbell Reverse Fly": {"date": "2026-05-22", "sets": [{"reps": 12, "weight": 22.5}, {"reps": 12, "weight": 22.5}, {"reps": 12, "weight": 22.5}]}
                     },
                   }};
-var COLORS=["#d41111", "#b3600e", "#d4d411", "#72d411", "#0eb30e", "#11d472", "#11d4d4", "#0e60b3", "#1111d4", "#7211d4", "#b30eb3", "#d41172"];
+var COLORS=["#2563eb", "#16a34a", "#7c3aed", "#0099CC", "#336699", "#6699CC", "#003366", "#4477AA", "#002266", "#88AACC", "#b30eb3", "#d41172"];
 var pchart=[];
 var selectedEx={};
 var allPrExercises=[];
@@ -1420,9 +1420,9 @@ function renderCal(){
     var isToday=dateStr===today;
     cell.textContent=d;
     var bg="transparent",color="#1a1a1a",border="none",fw="400";
-    if(isSelected){bg="#1a1a1a";color="#fff";}
+    if(isSelected){bg="#2563eb";color="#fff";}
     else if(woType){bg=WO_COLORS[woType];color="#fff";fw="600";}
-    else if(isToday){border="1px solid #1a1a1a";}
+    else if(isToday){border="2px solid #003087";}
     cell.style.cssText="padding:5px 2px;border-radius:5px;font-size:12px;cursor:pointer;background:"+bg+";color:"+color+";border:"+border+";font-weight:"+fw+";";
     (function(ds,wo){cell.onclick=function(){
       calSelected=ds;document.getElementById("log-date").value=ds;renderCal();
