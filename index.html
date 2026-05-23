@@ -127,6 +127,10 @@ h1{font-size:19px;font-weight:600;margin-bottom:2px}
       <div class="cleg" id="bw-leg" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
       <div style="position:relative;height:200px"><canvas id="bw-chart"></canvas></div>
     </div>
+    <div class="cwrap" style="margin-top:18px">
+      <p class="chart-lbl">Total Volume by Workout</p>
+      <div id="pr-chart-totalvol" style="width:100%"></div>
+    </div>
   </div>
   <div id="tc-log" class="tc">
     <div id="log-home">
@@ -647,6 +651,76 @@ function renderBWChart(){
               y:{ticks:{font:{size:10}},grid:{color:"rgba(0,0,0,.05)"}}}}
   });
 }
+function renderTotalVolChart(){
+  var el=document.getElementById("pr-chart-totalvol");
+  if(!el)return;
+  var stored=loadS();
+  var totals={"Push":{},"Legs":{},"Back":{}};
+  ["Push","Legs","Back"].forEach(function(wo){
+    var cv=CHART_VOLUME[wo]||{};
+    Object.keys(cv).forEach(function(ex){
+      (cv[ex]||[]).forEach(function(pt){
+        if(!totals[wo][pt.d])totals[wo][pt.d]=0;
+        totals[wo][pt.d]+=pt.w;
+      });
+    });
+    var sl=stored[wo]||{};
+    Object.keys(sl).forEach(function(ex){
+      if(ex==="__active")return;
+      (sl[ex]||[]).forEach(function(sess){
+        if(sess._placeholder||!sess.sets||!sess.sets.length)return;
+        var vol=0;
+        sess.sets.forEach(function(s){if(s.reps&&s.weight&&s.weight>10)vol+=s.reps*s.weight;});
+        if(vol){if(!totals[wo][sess.date])totals[wo][sess.date]=0;totals[wo][sess.date]+=vol;}
+      });
+    });
+  });
+  var colors={"Push":"#2563eb","Legs":"#16a34a","Back":"#7c3aed"};
+  var allDates=[];
+  ["Push","Legs","Back"].forEach(function(wo){Object.keys(totals[wo]).forEach(function(d){if(allDates.indexOf(d)<0)allDates.push(d);});});
+  allDates.sort();
+  if(!allDates.length){el.innerHTML="<div style='color:#bbb;font-size:12px'>No data yet</div>";return;}
+  var maxVol=0;
+  ["Push","Legs","Back"].forEach(function(wo){Object.values(totals[wo]).forEach(function(v){if(v>maxVol)maxVol=v;});});
+  var W=Math.max(el.offsetWidth||320,200),H=160,PAD=36,RPAD=8,TOP=12,BOT=24;
+  var chartH=H-TOP-BOT;
+  var chartW=W-PAD-RPAD;
+  var n=allDates.length;
+  var step=n>1?chartW/(n-1):0;
+  var svg='<svg width="'+W+'" height="'+H+'" xmlns="http://www.w3.org/2000/svg">';
+  for(var gi=0;gi<=4;gi++){
+    var gy=TOP+chartH*(1-gi/4);
+    var gv=Math.round(maxVol*gi/4/500)*500;
+    svg+='<line x1="'+PAD+'" y1="'+gy.toFixed(1)+'" x2="'+(W-RPAD)+'" y2="'+gy.toFixed(1)+'" stroke="#e5e7eb" stroke-width="1"/>';
+    svg+='<text x="'+(PAD-4)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="9" fill="#9ca3af">'+(gv>=1000?(gv/1000).toFixed(0)+'k':gv)+'</text>';
+  }
+  ["Push","Legs","Back"].forEach(function(wo){
+    var pts=[];
+    allDates.forEach(function(d,i){
+      var v=totals[wo][d];
+      if(!v)return;
+      var x=(PAD+i*step).toFixed(1);
+      var y=(TOP+chartH*(1-v/maxVol)).toFixed(1);
+      pts.push(x+","+y);
+    });
+    if(!pts.length)return;
+    var pArr=pts.map(function(p){return p.split(",").map(parseFloat);});
+    if(pArr.length===1){
+      svg+='<circle cx="'+pArr[0][0]+'" cy="'+pArr[0][1]+'" r="3" fill="'+colors[wo]+'"/>';
+    } else {
+      svg+='<path d="M'+pts.join(" L")+'" fill="none" stroke="'+colors[wo]+'" stroke-width="2"/>';
+      pArr.forEach(function(p){svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2" fill="'+colors[wo]+'"/>';});
+    }
+  });
+  var lx=PAD;
+  ["Push","Legs","Back"].forEach(function(wo){
+    svg+='<rect x="'+lx+'" y="'+(H-BOT+6)+'" width="8" height="8" fill="'+colors[wo]+'" rx="1"/>';
+    svg+='<text x="'+(lx+11)+'" y="'+(H-BOT+14)+'" font-size="10" fill="#6b7280">'+wo+'</text>';
+    lx+=52;
+  });
+  svg+='</svg>';
+  el.innerHTML=svg;
+}
 function buildLogMeta(){
   var stored=loadS();
   ["Push","Legs","Back"].forEach(function(wn){
@@ -810,7 +884,7 @@ function deleteWorkout(){
   }
   saveS(stored);
   backToHome();
-  renderCal();buildMetrics();renderOv();renderChart();buildLogMeta();
+  renderCal();buildMetrics();renderOv();renderChart();renderTotalVolChart();buildLogMeta();
 }
 function saveSession(){
   var date=document.getElementById("log-date").value;
@@ -1489,6 +1563,7 @@ mkPills("co-pills",["Push","Legs","Back"],null,function(n){
 renderOv();
 renderTotalVolChart();
 renderChart();
+renderTotalVolChart();
 buildLogMeta();
 ;
 </script>
