@@ -713,7 +713,7 @@ function renderTotalVolChart(){
       plugins:{legend:{display:false},tooltip:{mode:"index",intersect:false}},
       scales:{
         x:{ticks:{maxTicksLimit:6,maxRotation:0,font:{size:9}},grid:{color:"#f3f4f6"}},
-        y:{ticks:{maxTicksLimit:5,font:{size:9},callback:function(v){return v>=1000?(v/1000).toFixed(0)+"k":v;}},grid:{color:"#f3f4f6"}}
+        y:{beginAtZero:false,ticks:{maxTicksLimit:5,font:{size:9},callback:function(v){return v>=1000?(v/1000).toFixed(0)+"k":v;}},grid:{color:"#f3f4f6"}}
       }
     }
   });
