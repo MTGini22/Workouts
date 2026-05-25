@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v81</title>
+<title>Workout Tracker v82</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -525,13 +525,15 @@ function loadLogForDate(date, wo){
       else exsOnDate.push({name:exName,session:match[0]});
     }
   });
-  // 3. Also check LAST for this date
-  if(!exsOnDate.length){
-    var lastWo=LAST[wo]||{};
-    Object.keys(lastWo).forEach(function(exName){
-      if(lastWo[exName].date===date) exsOnDate.push({name:exName,session:lastWo[exName]});
-    });
-  }
+  // 3. Also check LAST for this date -- always merge, not just as fallback
+  var lastWo=LAST[wo]||{};
+  Object.keys(lastWo).forEach(function(exName){
+    if(lastWo[exName].date===date){
+      var existing=exsOnDate.findIndex(function(e){return e.name===exName;});
+      if(existing>=0) exsOnDate[existing]={name:exName,session:lastWo[exName]};
+      else exsOnDate.push({name:exName,session:lastWo[exName]});
+    }
+  });
   // Check if this date has a placeholder (plan approved but not yet logged)
   var stored2=loadS();
   var isPlaceholder=false;
