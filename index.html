@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v76</title>
+<title>Workout Tracker v77</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1060,7 +1060,17 @@ async function syncFromCloud(){
   }
 }
 function forceRegen(){
-  if(activeCo){recsCache[activeCo]=null;currentPlan[activeCo]=null;loadRecs(activeCo);}
+  if(activeCo){
+    recsCache[activeCo]=null;
+    currentPlan[activeCo]=null;
+    // Also clear from storage so loadRecs doesn't restore it
+    var _st=loadS();
+    if(_st._plans&&_st._plans[activeCo]){
+      delete _st._plans[activeCo];
+      saveS(_st);
+    }
+    loadRecs(activeCo);
+  }
 }
 function setMode(m){
   workoutMode=m;
@@ -1088,10 +1098,23 @@ async function loadRecs(wo){
   }
   var _st=loadS();
   if(_st._plans&&_st._plans[wo]&&_st._plans[wo].recs&&_st._plans[wo].recs.length){
-    currentPlan[wo]=_st._plans[wo].recs;
-    WOS[wo]=currentPlan[wo].map(function(r){return r.exercise;});
-    renderRecs(wo,currentPlan[wo]);
-    return;
+    // Check if plan is stale -- if a newer session exists after plan was saved, regenerate
+    var planTs=_st._plans[wo].ts||0;
+    var lastSess=getLastForWorkout(wo);
+    var lastDate=Object.values(lastSess).reduce(function(latest,s){
+      return s.date>latest?s.date:latest;
+    },"");
+    var lastTs=lastDate?new Date(lastDate).getTime():0;
+    if(lastTs>planTs){
+      // Session is newer than plan -- regenerate
+      delete _st._plans[wo];
+      saveS(_st);
+    } else {
+      currentPlan[wo]=_st._plans[wo].recs;
+      WOS[wo]=currentPlan[wo].map(function(r){return r.exercise;});
+      renderRecs(wo,currentPlan[wo]);
+      return;
+    }
   }
   var el=document.getElementById("co-recs");
   el.innerHTML="<div style='padding:20px;color:#999'>Building your "+wo+" plan...</div>";
@@ -1475,7 +1498,29 @@ syncFromCloud().then(function(){
   if(activeCo&&currentPlan[activeCo]&&currentPlan[activeCo].length){renderRecs(activeCo,currentPlan[activeCo]);}
 }).catch(function(){});
 (function(){
-  var st=loadS();if(st&&st._plans){Object.keys(st._plans).forEach(function(wo){var p=st._plans[wo];if(p&&p.recs){currentPlan[wo]=p.recs;WOS[wo]=p.recs.map(function(r){return r.exercise;});}});}
+  // Clear all saved plans on this load -- they may be stale
+  // Plans will regenerate fresh when coach tab is opened
+  var st=loadS();
+  if(st&&st._plans){
+    var plansCleared=false;
+    Object.keys(st._plans).forEach(function(wo){
+      var p=st._plans[wo];
+      if(!p||!p.recs)return;
+      // Check if plan is older than last session
+      var planTs=p.ts||0;
+      var lastSess=getLastForWorkout(wo);
+      var lastDate=Object.values(lastSess).reduce(function(latest,s){return s.date>latest?s.date:latest;},"");
+      var lastTs=lastDate?new Date(lastDate).getTime():0;
+      if(lastTs>planTs){
+        delete st._plans[wo];
+        plansCleared=true;
+      } else {
+        currentPlan[wo]=p.recs;
+        WOS[wo]=p.recs.map(function(r){return r.exercise;});
+      }
+    });
+    if(plansCleared)saveS(st);
+  }
 })();
 // Validate all stored plans against current templates -- fix any stale/incorrect exercises
 (function(){
