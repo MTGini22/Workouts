@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v96</title>
+<title>Workout Tracker v97</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -691,21 +691,27 @@ function renderTotalVolChart(){
         totals[wo][pt.d]+=pt.w;
       });
     });
+    // localStorage: only fill in dates not already covered by CHART_VOLUME
     var sl=stored[wo]||{};
+    // First collect all dates that have data from localStorage
+    var lsDates={};
     Object.keys(sl).forEach(function(ex){
       if(ex==="__active")return;
       (sl[ex]||[]).forEach(function(sess){
         if(sess._placeholder||!sess.sets||!sess.sets.length)return;
         var vol=0;
         sess.sets.forEach(function(s){if(s.reps&&s.weight&&s.weight>10)vol+=s.reps*s.weight;});
-        if(vol){if(!totals[wo][sess.date])totals[wo][sess.date]=0;totals[wo][sess.date]+=vol;}
+        if(vol){if(!lsDates[sess.date])lsDates[sess.date]=0;lsDates[sess.date]+=vol;}
       });
     });
-    // Pull from FULL_SESSIONS only for dates NOT already in CHART_VOLUME
-    // to avoid double-counting
+    // Only add localStorage dates not already in CHART_VOLUME totals
+    Object.keys(lsDates).forEach(function(date){
+      if(!totals[wo][date])totals[wo][date]=lsDates[date];
+    });
+    // FULL_SESSIONS: only fill in dates not already covered
     var fs=FULL_SESSIONS[wo]||{};
     Object.keys(fs).forEach(function(date){
-      if(totals[wo][date])return; // already have data from CHART_VOLUME
+      if(totals[wo][date])return;
       Object.keys(fs[date]).forEach(function(ex){
         var sess=fs[date][ex];
         if(!sess||!sess.sets)return;
