@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v100</title>
+<title>Workout Tracker v101</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -554,13 +554,16 @@ function loadLogForDate(date, wo){
     }
   });
   // Check if this date has a placeholder (plan approved but not yet logged)
+  // BUT only treat as placeholder if there is NO real session data
   var stored2=loadS();
   var isPlaceholder=false;
-  var storedWo2=stored2[wo]||{};
-  var activeEntries=storedWo2["__active"]||[];
-  activeEntries.forEach(function(s){if(s.date===date&&s._placeholder)isPlaceholder=true;});
+  if(!exsOnDate.length){
+    var storedWo2=stored2[wo]||{};
+    var activeEntries=storedWo2["__active"]||[];
+    activeEntries.forEach(function(s){if(s.date===date&&s._placeholder)isPlaceholder=true;});
+  }
   if(isPlaceholder){
-    // Plan approved - open log form for this date
+    // Plan approved but not yet logged - open blank log form
     startLog(wo);
     document.getElementById("log-date").value=date;
     return;
