@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v110</title>
+<title>Workout Tracker v111</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1157,21 +1157,22 @@ function rebuildDerivedData(){
         if(!CHART_WEIGHT[wo][ex])CHART_WEIGHT[wo][ex]=[];
         var cw=CHART_WEIGHT[wo][ex];
         var ei=cw.findIndex(function(p){return p.d===sess.date;});
-        if(ei>=0)cw[ei].w=maxW;else cw.push({d:sess.date,w:maxW});
-        cw.sort(function(a,b){return a.d.localeCompare(b.d);});
+        // Only update if no existing value or new value is >= existing (never downgrade)
+        if(ei>=0){if(maxW>=cw[ei].w)cw[ei].w=maxW;}
+        else{cw.push({d:sess.date,w:maxW});cw.sort(function(a,b){return a.d.localeCompare(b.d);});}
         if(!CHART_VOLUME[wo])CHART_VOLUME[wo]={};
         if(!CHART_VOLUME[wo][ex])CHART_VOLUME[wo][ex]=[];
         var cv=CHART_VOLUME[wo][ex];
         var vi=cv.findIndex(function(p){return p.d===sess.date;});
-        if(vi>=0)cv[vi].w=totalVol;else cv.push({d:sess.date,w:totalVol});
-        cv.sort(function(a,b){return a.d.localeCompare(b.d);});
+        if(vi>=0){if(totalVol>=cv[vi].w)cv[vi].w=totalVol;}
+        else{cv.push({d:sess.date,w:totalVol});cv.sort(function(a,b){return a.d.localeCompare(b.d);});}
         var e1rm=Math.round(maxW*(1+maxReps/30)*10)/10;
         if(!CHART_E1RM[wo])CHART_E1RM[wo]={};
         if(!CHART_E1RM[wo][ex])CHART_E1RM[wo][ex]=[];
         var ce=CHART_E1RM[wo][ex];
         var ci=ce.findIndex(function(p){return p.d===sess.date;});
-        if(ci>=0)ce[ci].w=e1rm;else ce.push({d:sess.date,w:e1rm});
-        ce.sort(function(a,b){return a.d.localeCompare(b.d);});
+        if(ci>=0){if(e1rm>=ce[ci].w)ce[ci].w=e1rm;}
+        else{ce.push({d:sess.date,w:e1rm});ce.sort(function(a,b){return a.d.localeCompare(b.d);});}
       });
     });
   });
