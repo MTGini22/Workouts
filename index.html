@@ -1855,6 +1855,26 @@ renderTotalVolChart();
 renderChart();
 renderTotalVolChart();
 buildLogMeta();
+// Service worker for auto-updates on PWA home screen app
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/Workouts/sw.js').then(function(reg){
+    reg.addEventListener('updatefound',function(){
+      var sw=reg.installing;
+      sw.addEventListener('statechange',function(){
+        if(sw.state==='installed'&&navigator.serviceWorker.controller){
+          window.location.reload();
+        }
+      });
+    });
+  });
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'){
+      navigator.serviceWorker.getRegistration().then(function(reg){
+        if(reg)reg.update();
+      });
+    }
+  });
+}
 ;
 </script>
 </body>
