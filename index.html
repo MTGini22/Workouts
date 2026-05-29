@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Workout Tracker v112</title>
+<title>Workout Tracker v113</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -436,58 +436,9 @@ function renderChart(){
   var wExs=JSON.parse(JSON.stringify(CHART_WEIGHT[activePr]||{}));
   var vExs=JSON.parse(JSON.stringify(CHART_VOLUME[activePr]||{}));
   var eExs=JSON.parse(JSON.stringify(CHART_E1RM[activePr]||{}));
-  // Merge stored sessions - including NEW exercises not in hardcoded data
-  var stored=loadS(); var sl=stored[activePr]||{};
-  // Also pull from FULL_SESSIONS for exercises like Bulgarian Split Squat, Leg Press
-  var fullSessions=FULL_SESSIONS[activePr]||{};
-  Object.keys(fullSessions).forEach(function(date){
-    Object.keys(fullSessions[date]).forEach(function(en){
-      var s=fullSessions[date][en];
-      if(!s||!s.sets)return;
-      var sets=s.sets||[];
-      var weights=sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
-      var maxW=weights.length?Math.max.apply(null,weights):0;
-      var vol=0,e1rm=0;
-      sets.forEach(function(st){
-        var r=st.reps||0,w=st.weight||0;
-        if(r&&w&&w>10){vol+=r*w;var e=w*(1+r/30);if(e>e1rm)e1rm=e;}
-      });
-      function upsertFS(obj,name,d,val){
-        if(!val)return;
-        if(!obj[name])obj[name]=[];
-        var ei=obj[name].findIndex(function(p){return p.d===d;});
-        if(ei>=0)obj[name][ei].w=Math.round(val);else obj[name].push({d:d,w:Math.round(val)});
-        obj[name].sort(function(a,b){return a.d.localeCompare(b.d);});
-      }
-      var isBW=(en==="Pull-Ups"||en==="Chest Dips");
-      if(!isBW&&maxW)upsertFS(wExs,en,date,maxW);
-      if(!isBW&&vol)upsertFS(vExs,en,date,vol);
-      if(!isBW&&e1rm)upsertFS(eExs,en,date,e1rm);
-    });
-  });
-  Object.keys(sl).forEach(function(en){
-    if(en==="__active")return;
-    sl[en].forEach(function(s){
-      var sets=s.sets||[];
-      var weights=sets.filter(function(st){return st.weight&&st.weight>10;}).map(function(st){return st.weight;});
-      var maxW=weights.length?Math.max.apply(null,weights):0;
-      var vol=0; var e1rm=0;
-      sets.forEach(function(st){
-        var r=st.reps||0; var w=st.weight||0;
-        if(r&&w&&w>10){vol+=r*w; var e=w*(1+r/30); if(e>e1rm)e1rm=e;}
-      });
-      function upsert(obj,name,d,val){
-        if(!obj[name])obj[name]=[];
-        var ei=obj[name].findIndex(function(p){return p.d===d;});
-        // Never downgrade -- only update if new value >= existing
-        if(ei>=0){if(val>=obj[name][ei].w)obj[name][ei].w=Math.round(val);}
-        else{obj[name].push({d:d,w:Math.round(val)});obj[name].sort(function(a,b){return a.d.localeCompare(b.d);});}
-      }
-      if(maxW)upsert(wExs,en,s.date,maxW);
-      if(vol)upsert(vExs,en,s.date,vol);
-      if(e1rm)upsert(eExs,en,s.date,e1rm);
-    });
-  });
+  // rebuildDerivedData() already merged FULL_SESSIONS and localStorage
+  // into the global CHART arrays before renderChart is called.
+  // wExs/vExs/eExs are already correct copies -- no further merging needed.
   // Build exercise list - all available
   allPrExercises=Object.keys(wExs);
   // Initialize selection - all on by default for new exercises
