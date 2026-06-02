@@ -1,4 +1,4 @@
-const V='wt-v114';
+const V='wt-v115';
 const FILES=['/Workouts/','/Workouts/index.html'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
